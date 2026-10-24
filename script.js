@@ -60,7 +60,7 @@ function toList(cell) { return cell.split(",").map(s => s.trim().toLowerCase()).
 // Contact and "already requested" are saved PER ACCOUNT, so two accounts on one device never mix
 function accountKey() { return currentUser ? (currentUser.key || currentUser.username) : ""; }   // never changes, even if the username does
 function getContact() { return currentUser ? localStorage.getItem("bb_contact_" + accountKey()) || "" : ""; }
-function setContact(username, value) { localStorage.setItem("bb_contact_" + accountKey(), value); }
+function setContact(value) { localStorage.setItem("bb_contact_" + accountKey(), value); }
 function sentKey() { return "bb_sent_" + accountKey(); }
 function doneKey() { return "bb_done_" + accountKey(); }   // requests this account marked as completed (saved on this device)
 function cleanSection(text) { return text.trim().replace(/\s+/g, " ").toUpperCase(); }   // " cs  1-1 " becomes "CS 1-1"
@@ -170,7 +170,7 @@ function computeSkills() {   // official list + approved requests + the signed-i
 function findMatches(me, everyone) {
   const results = [];
   for (const other of everyone) {
-    if (other.name === me.name || (me.username && other.username === me.username)) continue;
+    if (me.username && other.username === me.username) continue;
     const theyCanTeachMe = other.teach.filter(s => me.learn.includes(s));
     const iCanTeachThem = me.teach.filter(s => other.learn.includes(s));
     const sharedDays = other.days.filter(d => me.days.includes(d));
@@ -480,7 +480,7 @@ async function handleSignup(event) {
     people.push({ ...profile, pinHash, emailHash });          // show them on the site right away
     currentUser = { ...profile, pinHash, emailHash };         // and sign them in
     localStorage.setItem("bb_user", JSON.stringify(currentUser));
-    setContact(currentUser.username, contact);   // saved only on this device
+    setContact(contact);   // saved only on this device
 
     form.reset();
     setSignupStep(1);
@@ -727,7 +727,7 @@ async function sendRequest(event) {
   status.textContent = "Sending...";
   try {
     await fetch(REQUEST_POST_URL, { method: "POST", mode: "no-cors", body: data });
-    setContact(currentUser.username, contact);
+    setContact(contact);
     localStorage.setItem(sentKey(), JSON.stringify([...new Set(sentTo().concat(target.username))]));
     document.getElementById("requestDialog").close();
     renderMatches();   // refresh the cards so this one shows "Request sent"
@@ -823,7 +823,7 @@ async function saveProfile(event) {
     await fetch(FORM_POST_URL, { method: "POST", mode: "no-cors", body: data });
     currentUser = updated;
     localStorage.setItem("bb_user", JSON.stringify(currentUser));
-    setContact(currentUser.username, contact);
+    setContact(contact);
     const i = people.findIndex(p => (p.key || p.username) === (updated.key || updated.username));
     if (i >= 0) people[i] = { ...people[i], ...updated };
 
