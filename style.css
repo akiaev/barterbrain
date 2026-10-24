@@ -50,8 +50,8 @@ button, input, select, textarea { font-family: inherit; }
   gap: .8rem; padding: .8rem 1.2rem; pointer-events: none; align-items: stretch; height: var(--header-h);   /* the empty gap between the pills stays clickable-through */
 }
 .pill {
-  pointer-events: auto; display: flex; align-items: center; gap: .4rem 1.4rem; min-height: 3.4rem; padding: .45rem 1rem;
-  background: var(--maroon-dark); border-radius: 16px; box-shadow: 0 6px 20px rgba(58, 0, 5, .22);
+  pointer-events: auto; display: flex; align-items: center; gap: .4rem 1.4rem; min-height: 3.4rem; padding: .45rem 1.2rem;
+  background: var(--maroon-dark); border-radius: 999px; box-shadow: 0 6px 20px rgba(58, 0, 5, .22);
 }
 .pill-right { position: relative; padding: .4rem; gap: .2rem; }   /* even padding all round so the button sits centred */
 .logo { display: inline-flex; align-items: center; gap: .6rem; color: var(--cream); font-size: 1.25rem; line-height: 1; text-decoration: none; }
@@ -72,7 +72,7 @@ nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cr
 .pill-left { position: relative; }
 .pill-link { display: inline-flex; align-items: center; height: 2.6rem; padding: 0 .9rem; color: var(--cream); text-decoration: none; font-weight: 600; }
 .pill-link:hover { color: #fff7e0; }
-.pill-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; height: 2.6rem; padding: 0 1.1rem; border: 0; border-radius: 10px; background: var(--cream); color: var(--maroon-dark); font: inherit; font-weight: 700; line-height: 1; text-decoration: none; cursor: pointer; }
+.pill-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; height: 2.6rem; padding: 0 1.1rem; border: 0; border-radius: 999px; background: var(--cream); color: var(--maroon-dark); font: inherit; font-weight: 700; line-height: 1; text-decoration: none; cursor: pointer; }
 .caret { width: .45rem; height: .45rem; margin-top: -.2rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform .15s; }
 .pill-btn[aria-expanded="true"] .caret { margin-top: .2rem; transform: rotate(225deg); }
 
@@ -252,9 +252,29 @@ button.radar-row:hover { background: rgba(58, 0, 5, .08); }
 .auth-art {
   position: sticky; top: var(--header-h); height: calc(100dvh - var(--header-h) - var(--bottom-bar) - 1.5rem);
   display: grid; place-items: center; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow);
-  background: radial-gradient(ellipse at 50% 35%, var(--maroon-hover) 0%, var(--maroon) 70%);
+  background:
+    radial-gradient(circle at 50% 56%, rgba(232, 131, 143, .30) 0%, rgba(150, 40, 60, .20) 30%, transparent 64%),   /* the brain's own pink glow, so the light seems to come from the logo */
+    radial-gradient(ellipse at 50% 35%, var(--maroon-hover) 0%, var(--maroon) 70%);
 }
-.auth-art img { width: 70%; max-width: 440px; height: auto; }   /* change 70% to resize the logo */
+.auth-art::before {   /* dotted shading like the dots in the artwork, fading out toward the edges */
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(rgba(255, 170, 185, .17) 1.3px, transparent 1.8px) 0 0 / 11px 11px;
+  -webkit-mask-image: radial-gradient(circle at 50% 56%, #000 0%, transparent 72%);
+          mask-image: radial-gradient(circle at 50% 56%, #000 0%, transparent 72%);
+}
+.auth-art::after {   /* the soft shadow on the "floor" under the brain, so it sits in the scene instead of on top of it */
+  content: ""; position: absolute; left: 50%; bottom: 10.5%; width: 54%; height: 6%;
+  background: radial-gradient(ellipse at center, rgba(15, 0, 2, .6), transparent 70%); filter: blur(7px);
+  transform: translateX(-50%); animation: logoShadow 6s ease-in-out infinite;
+}
+.auth-art img {
+  position: relative; z-index: 1; width: 86%; height: 86%; object-fit: contain;   /* logo size: change both 86% values (100% fills the whole panel) */
+  filter: drop-shadow(0 20px 22px rgba(15, 0, 2, .5)) drop-shadow(0 0 46px rgba(232, 131, 143, .28));
+  animation: logoFloat 6s ease-in-out infinite;   /* a slow float; remove this line to keep it still */
+}
+@keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes logoShadow { 0%, 100% { transform: translateX(-50%) scale(1); opacity: .95; } 50% { transform: translateX(-50%) scale(.86); opacity: .6; } }
+@media (prefers-reduced-motion: reduce) { .auth-art img, .auth-art::after { animation: none; } }
 .auth-head { text-align: center; margin-bottom: .9rem; }
 .auth-head h2 { font-size: clamp(1.35rem, 2.4vw, 1.6rem); text-wrap: balance; }
 .auth-head p { margin: .4rem 0 0; color: var(--muted); }
@@ -320,12 +340,12 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
   .pill { padding: .35rem .8rem; min-height: 0; }
   .pill-right { gap: 0; padding: .35rem; }
   .pill-btn, .pill-link { height: 2.3rem; }
-  body:not(.signed-in) .pill-right { display: none; }   /* guests: Log in / Sign up move into the ":" menu */
-  body:not(.signed-in) .pill-left { flex: 1; }           /* one wide pill: logo, name and ":" */
-  .dots-btn { display: inline-flex; align-items: center; justify-content: center; margin-left: auto; width: 2.3rem; height: 2.3rem; padding: 0; border: 0; border-radius: 10px; background: rgba(241, 232, 210, .14); color: var(--cream); cursor: pointer; }
-  .dots-btn[aria-expanded="true"] { background: rgba(241, 232, 210, .28); }
+  .pill-left { flex: 1; min-height: 3rem; }   /* the name pill takes the width, the round account button sits beside it */
+  .guest-only.pill-link, .guest-only.pill-btn { display: none; }   /* guests: Log in / Sign up open from the round button instead */
+  .dots-btn { display: inline-flex; align-items: center; justify-content: center; width: 2.6rem; height: 2.6rem; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--cream); cursor: pointer; }   /* guests' round account button */
+  .dots-btn[aria-expanded="true"] { background: rgba(241, 232, 210, .14); }
   .dots { width: 4px; height: 4px; border-radius: 50%; background: currentColor; box-shadow: 0 8px 0 currentColor; transform: translateY(-4px); }
-  .guest-menu { left: 0; right: 0; min-width: 0; display: flex; flex-direction: column; gap: .5rem; padding: .5rem; background: var(--maroon-dark); border-radius: 18px; }   /* two stacked full-width buttons */
+  .menu.guest-menu { position: fixed; left: calc(.7rem + env(safe-area-inset-left, 0px)); right: calc(.7rem + env(safe-area-inset-right, 0px)); top: calc(var(--header-h) + .1rem); min-width: 0; display: flex; flex-direction: column; gap: .5rem; padding: .5rem; background: var(--maroon-dark); border-radius: 18px; }   /* two stacked full-width buttons */
   .guest-menu a { display: flex; align-items: center; justify-content: center; height: 3rem; padding: 0 1rem; border-radius: 14px; font-weight: 600; text-align: center; }
   .guest-menu a[data-auth="signin"] { background: rgba(241, 232, 210, .14); color: var(--cream); }
   .guest-menu a[data-auth="signup"] { background: var(--cream); color: var(--maroon-dark); }
@@ -335,12 +355,13 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
   .pill-btn { padding: 0 .85rem; }
   .pill-link, .pill-btn, .logo-text { white-space: nowrap; }   /* never wrap onto two lines */
   .pill { gap: .4rem .6rem; }
-  .pill-left { padding: .35rem .7rem; min-width: 0; }
-  .logo { font-size: 1.2rem; gap: .5rem; }
+  .pill-left { padding: 0; min-width: 0; }   /* the padding moves onto the logo link, so the whole pill is the Home button */
+  .logo { flex: 1; align-self: stretch; padding: .35rem .7rem; border-radius: 999px; font-size: 1.2rem; gap: .5rem; }   /* fills the whole pill; tap anywhere on it to go Home */
+  .logo:active { background: rgba(241, 232, 210, .12); }
   .logo-img { height: 2.1rem; }
   .pill-link, .pill-btn { font-size: .92rem; }
   .menu { top: calc(100% + .5rem); }
-  .pill-right:has(.account-menu:not([hidden])) { width: 3rem; min-height: 0; padding: 0; justify-content: center; border-radius: 50%; }   /* Account becomes a round icon */
+  .pill-right { width: 3rem; height: 3rem; min-height: 0; padding: 0; align-self: center; justify-content: center; border-radius: 50%; }   /* round account button (guests and members) */
   .account-menu .pill-btn { width: 2.6rem; height: 2.6rem; padding: 0; border-radius: 50%; }
   .acct-text, .caret { display: none; }
   .acct-ico { display: block; width: 1.35rem; height: 1.35rem; }
@@ -348,6 +369,9 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
   nav { position: fixed; bottom: calc(.7rem + env(safe-area-inset-bottom, 0px)); left: calc(.9rem + env(safe-area-inset-left, 0px)); right: calc(.9rem + env(safe-area-inset-right, 0px)); z-index: 6; flex-wrap: nowrap; gap: 0; justify-content: space-around; align-items: center; background: var(--maroon-dark); border-radius: 999px; box-shadow: 0 8px 24px rgba(58, 0, 5, .4); padding: .4rem .5rem; }   /* floating pill tab bar */
   nav a, nav button { position: relative; flex: none; display: flex; align-items: center; justify-content: center; width: 2.9rem; height: 2.9rem; padding: 0; border-radius: 50%; font-size: 0; border-bottom: 0; background: rgba(241, 232, 210, .14); transition: background .15s, color .15s; }   /* icon-only circles (the label text stays for screen readers) */
   nav a:active, nav button:active { background: rgba(241, 232, 210, .28); }
+  nav a[href="#home"] { display: flex; }   /* the Home circle is back on phones, so the bar has 6 buttons */
+  nav a, nav button { width: min(2.9rem, calc((100vw - 3.4rem) / 6)); height: auto; aspect-ratio: 1; }   /* 6 circles always fit, even on small phones */
+  .ico svg { display: block; width: 1.5rem; height: 1.5rem; color: #fff; }   /* the Home icon */
   nav a.active, nav button[aria-expanded="true"] { background: var(--gold); }   /* the current page / open menu gets the lit-up circle */
   /* Inbox badge on the tab bar: same look as the dashboard's red badge (red, white number, ring in the bar's colour, pops in) */
   #inboxCount[data-n]:not([data-n=""])::after {
