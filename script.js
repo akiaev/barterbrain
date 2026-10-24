@@ -216,6 +216,7 @@ function renderStats() {
 function personCard(person) {
   return `<article class="card">
     <h3>${esc(firstName(person.name))}</h3>
+    ${person.username ? `<div class="person-user">@${esc(person.username)}</div>` : ""}
     <div class="meta">${esc(person.section)} | ${esc(person.days.join(", "))} | ${esc(person.mode)}</div>
     <div><strong>Teaches:</strong><br>${chipsHTML(person.teach, "")}</div>
     <div><strong>Wants:</strong><br>${chipsHTML(person.learn, "want")}</div>
@@ -225,7 +226,7 @@ function personCard(person) {
 function matchesFilters(person, skill, days, query) {
   const skillOk = skill === "all" || person.teach.includes(skill) || person.learn.includes(skill);
   const dayOk = days.length === 0 || days.some(d => person.days.includes(d));   // free on ANY of the picked days
-  const text = [firstName(person.name), person.section].concat(person.teach, person.learn).join(" ").toLowerCase();
+  const text = [firstName(person.name), person.username, person.section].concat(person.teach, person.learn).join(" ").toLowerCase();
   const queryOk = !query || text.includes(query);
   return skillOk && dayOk && queryOk;
 }
@@ -259,7 +260,7 @@ function matchCard(result, index) {
 
   return `<article class="card match-card ${isMutual ? "mutual" : ""}">
     <div class="req-head"><h3>${esc(firstName(person.name))}</h3><span class="badge ${isMutual ? "" : "oneway"}">${badgeText}</span></div>
-    <div class="req-user">${esc(person.section)}</div>
+    <div class="req-user">${person.username ? `@${esc(person.username)} | ` : ""}${esc(person.section)}</div>
     ${teachMe}
     ${teachThem}
     ${daysRow(sharedDays)}
