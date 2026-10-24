@@ -51,9 +51,11 @@ function firstName(name) { return (name || "").trim().split(/\s+/)[0]; }   // on
 function label(skill) { return skill.charAt(0).toUpperCase() + skill.slice(1); }
 function toList(cell) { return cell.split(",").map(s => s.trim().toLowerCase()).filter(Boolean); }
 // Contact and "already requested" are saved PER ACCOUNT, so two accounts on one device never mix
-function getContact() { return currentUser ? localStorage.getItem("bb_contact_" + currentUser.username) || "" : ""; }
-function setContact(username, value) { localStorage.setItem("bb_contact_" + username, value); }
-function sentKey() { return "bb_sent_" + (currentUser ? currentUser.username : ""); }
+function accountKey() { return currentUser ? (currentUser.key || currentUser.username) : ""; }   // never changes, even if the username does
+function getContact() { return currentUser ? localStorage.getItem("bb_contact_" + accountKey()) || "" : ""; }
+function setContact(username, value) { localStorage.setItem("bb_contact_" + accountKey(), value); }
+function sentKey() { return "bb_sent_" + accountKey(); }
+function cleanSection(text) { return text.trim().replace(/\s+/g, " ").toUpperCase(); }   // " cs  1-1 " becomes "CS 1-1"
 function chipsHTML(list, extraClass) {
   return list.map(s => `<span class="chip ${extraClass}">${esc(label(s))}</span>`).join("");
 }
@@ -81,27 +83,38 @@ function parseCSV(text) {       // handles "quoted, cells" from Google Sheets
 
 function rowsToPeople(rows) {
   const list = [];
-  const byUsername = {};   // username -> the person already in the list
+  const byKey = {};   // key = the username an account started with. It never changes, even if the username does.
   for (const r of rows.slice(1)) {
     if (!r[COLS.name]) continue;
+    const username = (r[COLS.username] || "").trim().toLowerCase();
+    if (!username) continue;
+    // The password column holds: hash | original username | email hash (older rows only have the hash)
+    const parts = (r[COLS.pinHash] || "").trim().split("|");
     const person = {
       name: r[COLS.name].trim(),
-      section: (r[COLS.section] || "").trim(),
+      section: cleanSection(r[COLS.section] || ""),
       teach: toList(r[COLS.teach] || ""),
       learn: toList(r[COLS.learn] || ""),
       days: (r[COLS.days] || "").split(",").map(d => d.trim().slice(0, 3)).filter(Boolean),
       mode: (r[COLS.mode] || "").trim(),
-      username: (r[COLS.username] || "").trim().toLowerCase(),
-      pinHash: (r[COLS.pinHash] || "").trim()
+      username: username,
+      pinHash: parts[0],
+      key: (parts[1] || username).toLowerCase(),
+      emailHash: parts[2] || ""
     };
-    const existing = person.username ? byUsername[person.username] : null;
+    const existing = byKey[person.key];
     if (!existing) {
+      // a new account: ignore it if the username or email is already in use
+      if (list.some(p => p.username === person.username)) continue;
+      if (person.emailHash && list.some(p => p.emailHash === person.emailHash)) continue;
       list.push(person);
-      if (person.username) byUsername[person.username] = person;
+      byKey[person.key] = person;
     } else if (existing.pinHash === person.pinHash) {
-      Object.assign(existing, person);   // same username + same password hash = a profile update, newest row wins
+      // same account + same password hash = a profile update (maybe a new username). Newest row wins.
+      if (person.username !== existing.username && list.some(p => p !== existing && p.username === person.username)) continue;
+      Object.assign(existing, { ...person, key: existing.key, emailHash: person.emailHash || existing.emailHash });
     }
-    // a row that reuses a taken username with a different password hash is ignored
+    // a row for an existing account with a different password hash is ignored
   }
   return list;
 }
@@ -281,7 +294,7 @@ function countSkills() {
 function radarRow(row, max) {
   const barWidth = (row.want / max) * 100;
   const needsTeacher = row.teach === 0;
-  const note = needsTeacher ? "needs a teacher!" : `${row.teach} teach`;
+  const note = `${row.teach} can teach`;   // shown in red when it is 0 (see needsTeacher below)
 
   return `<button type="button" class="radar-row" data-skill="${esc(row.skill)}">
     <strong>${esc(label(row.skill))}</strong>
@@ -313,7 +326,21 @@ async function sha256(text) {   // scrambles text so the raw PIN is never sent o
   const hex = [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, "0")).join("");
   return "h" + hex;             // the "h" stops Sheets from treating it like a number
 }
-function pinHashOf(username, pin) { return sha256(`${SALT}|${username}|${pin}`); }
+function pinHashOf(username, pin) { return sha256(`${SALT}|${username}|${pin}`); }   // username here = the account key
+
+function normalizeEmail(email) {   // name+anything@school counts as name@school
+  const [local, domain] = email.trim().toLowerCase().split("@");
+  return local.split("+")[0] + "@" + (domain || "");
+}
+function emailHashOf(email) { return sha256(`${SALT}|email|${normalizeEmail(email)}`); }   // lets the site spot a reused email without publishing it
+
+function pinField(user) {   // what goes in the Sheet's password column: hash | original username | email hash
+  return [user.pinHash, user.key || user.username, user.emailHash || ""].join("|");
+}
+
+function usernameTaken(name, ownKey) {   // true if someone else uses (or first signed up with) this name
+  return people.some(p => (p.key || p.username) !== ownKey && (p.username === name || (p.key || p.username) === name));
+}
 
 function updateAuthUI() {
   const signedIn = currentUser !== null;
@@ -354,7 +381,7 @@ function showAuthForm(which) {   // "signup" or "signin"
   window.scrollTo(0, 0);
 }
 
-function continueSignup() {      // checks step 1, then opens step 2
+async function continueSignup() {      // checks step 1, then opens step 2
   const form = document.getElementById("signupForm");
   const msg = document.getElementById("signupMsg1");
   const fields = [...document.querySelectorAll("#signupStep1 input")];
@@ -367,10 +394,16 @@ function continueSignup() {      // checks step 1, then opens step 2
     msg.textContent = `Please use your school email (${SCHOOL_DOMAIN}).`;
     return;
   }
-  if (people.some(p => p.username === username)) {
+  if (usernameTaken(username, null)) {
     msg.textContent = "That username is taken. Try another one.";
     return;
   }
+  const emailHash = await emailHashOf(email);
+  if (people.some(p => p.emailHash === emailHash)) {
+    msg.textContent = "That email already has an account. Please log in instead.";
+    return;
+  }
+  msg.textContent = "";
   setSignupStep(2);
 }
 
@@ -384,7 +417,8 @@ async function handleSignup(event) {
   const email = form.email.value.trim().toLowerCase();
   const username = form.username.value.trim().toLowerCase();
 
-  if (!email.endsWith(SCHOOL_DOMAIN) || people.some(p => p.username === username)) {
+  const emailHash = await emailHashOf(email);
+  if (!email.endsWith(SCHOOL_DOMAIN) || usernameTaken(username, null) || people.some(p => p.emailHash === emailHash)) {
     setSignupStep(1);   // something in step 1 needs fixing
     continueSignup();
     return;
@@ -404,8 +438,8 @@ async function handleSignup(event) {
 
   const contact = form.contact.value.trim();
   const profile = {
-    name: form.fullName.value.trim(), section: form.section.value.trim(),
-    teach, learn, days, mode, username
+    name: form.fullName.value.trim(), section: cleanSection(form.section.value),
+    teach, learn, days, mode, username, key: username
   };
 
   try {
@@ -420,12 +454,12 @@ async function handleSignup(event) {
     data.append(ENTRY.contact, contact);
     data.append(ENTRY.email, email);
     data.append(ENTRY.username, username);
-    data.append(ENTRY.pinHash, pinHash);
+    data.append(ENTRY.pinHash, pinField({ pinHash, key: username, emailHash }));
 
     await fetch(FORM_POST_URL, { method: "POST", mode: "no-cors", body: data });
 
-    people.push({ ...profile, pinHash });          // show them on the site right away
-    currentUser = { ...profile, pinHash };         // and sign them in
+    people.push({ ...profile, pinHash, emailHash });          // show them on the site right away
+    currentUser = { ...profile, pinHash, emailHash };         // and sign them in
     localStorage.setItem("bb_user", JSON.stringify(currentUser));
     setContact(currentUser.username, contact);   // saved only on this device
 
@@ -448,8 +482,9 @@ async function handleSignin(event) {
 
   try {
     const username = form.username.value.trim().toLowerCase();
-    const pinHash = await pinHashOf(username, form.pin.value);
-    const found = people.find(p => p.username === username && p.pinHash === pinHash);
+    const person = people.find(p => p.username === username);
+    const pinHash = person ? await pinHashOf(person.key || person.username, form.pin.value) : "";
+    const found = person && person.pinHash === pinHash ? person : null;
 
     if (!found) {
       msg.textContent = "No match. Check your username and password. If you just signed up on another device, wait a few minutes and try again.";
@@ -457,7 +492,7 @@ async function handleSignin(event) {
     }
     currentUser = { name: found.name, section: found.section, teach: found.teach,
                     learn: found.learn, days: found.days, mode: found.mode, username: found.username,
-                    pinHash: found.pinHash };
+                    pinHash: found.pinHash, key: found.key || found.username, emailHash: found.emailHash || "" };
     localStorage.setItem("bb_user", JSON.stringify(currentUser));
     form.reset();
     msg.textContent = "";
@@ -477,27 +512,31 @@ function connectAccounts() {
   document.getElementById("editProfileBtn").addEventListener("click", openEditProfile);
   document.getElementById("editForm").addEventListener("submit", saveProfile);
   document.getElementById("editCancel").addEventListener("click", () => document.getElementById("editDialog").close());
+  document.getElementById("skillsForm").addEventListener("submit", saveSkills);
   // Dropdowns: Account (Manage account / Log out) and Request a skill. Only one is open at a time,
   // and the rest of the page dims while one is open.
   const backdrop = document.getElementById("menuBackdrop");
   const menus = {
     account: { button: document.getElementById("accountBtn"), panel: document.getElementById("accountDropdown") },
+    skills: { button: document.getElementById("navSkillsBtn"), panel: document.getElementById("skillsPanel") },
     request: { button: document.getElementById("navRequestBtn"), panel: document.getElementById("requestPanel") }
   };
-  const openMenu = which => {   // which = "account", "request" or null (close everything)
+  const openMenu = which => {   // which = "account", "skills", "request" or null (close everything)
     for (const [name, menu] of Object.entries(menus)) {
       menu.panel.hidden = name !== which;
       menu.button.setAttribute("aria-expanded", String(name === which));
     }
     backdrop.classList.toggle("open", Boolean(which));
     document.body.classList.toggle("menu-open", Boolean(which));
+    if (which === "skills") fillQuickSkills();   // tick what the person currently has
     if (which === "request") menus.request.panel.querySelector("input").focus();
   };
+  window.closeMenus = () => openMenu(null);   // lets other functions (like saveSkills) close the dropdown
   for (const [name, menu] of Object.entries(menus)) {
     menu.button.addEventListener("click", () => openMenu(menu.panel.hidden ? name : null));
   }
   document.addEventListener("click", event => {
-    if (!event.target.closest("#accountBtn, #accountDropdown, #navRequestBtn, #requestPanel")) openMenu(null);
+    if (!event.target.closest("#accountBtn, #accountDropdown, #navSkillsBtn, #skillsPanel, #navRequestBtn, #requestPanel")) openMenu(null);
   });
   document.addEventListener("keydown", event => { if (event.key === "Escape") openMenu(null); });
   menus.account.panel.querySelector("a").addEventListener("click", () => openMenu(null));
@@ -558,7 +597,7 @@ function requestCard(r) {
 }
 
 function renderInbox() {
-  const mine = currentUser ? requests.filter(r => r.to === currentUser.username).reverse() : [];  // newest first
+  const mine = currentUser ? requests.filter(r => r.to === currentUser.username || r.to === (currentUser.key || currentUser.username)).reverse() : [];  // newest first
   document.getElementById("inboxCount").textContent = mine.length ? ` (${mine.length})` : "";
   document.getElementById("welcomeRequests").textContent =
     mine.length ? `You have ${mine.length} swap request(s). Check your Inbox.` : "";
@@ -655,6 +694,7 @@ function openEditProfile() {
   const form = document.getElementById("editForm");
   form.fullName.value = currentUser.name;
   form.section.value = currentUser.section;
+  form.username.value = currentUser.username;
   form.contact.value = getContact();
   setChecked("editTeach", currentUser.teach || []);
   setChecked("editLearn", currentUser.learn || []);
@@ -675,7 +715,15 @@ async function saveProfile(event) {
   if (days.length === 0 || !mode) { status.textContent = "Pick your free days and a mode."; return; }
 
   const contact = form.contact.value.trim();
-  const updated = { ...currentUser, name: form.fullName.value.trim(), section: form.section.value.trim(),
+  const newUsername = form.username.value.trim().toLowerCase();
+  const ownKey = currentUser.key || currentUser.username;
+  if (!/^[a-z0-9_][a-z0-9_.]{2,19}$/.test(newUsername)) {
+    status.textContent = "Username: 3 to 20 letters, numbers, _ or . (it can't start with a dot).";
+    return;
+  }
+  if (usernameTaken(newUsername, ownKey)) { status.textContent = "That username is taken. Try another one."; return; }
+  const updated = { ...currentUser, name: form.fullName.value.trim(), section: cleanSection(form.section.value),
+                    username: newUsername, key: ownKey,
                     teach, learn, days, mode, editedAt: Date.now() };
 
   // An edit is a new row in the same sign-up Form. The newest row for a username wins.
@@ -689,7 +737,7 @@ async function saveProfile(event) {
   data.append(ENTRY.contact, contact);
   data.append(ENTRY.email, "profile-update");
   data.append(ENTRY.username, updated.username);
-  data.append(ENTRY.pinHash, updated.pinHash);
+  data.append(ENTRY.pinHash, pinField(updated));
 
   const button = form.querySelector("button[type=submit]");
   button.disabled = true;
@@ -699,7 +747,7 @@ async function saveProfile(event) {
     currentUser = updated;
     localStorage.setItem("bb_user", JSON.stringify(currentUser));
     setContact(currentUser.username, contact);
-    const i = people.findIndex(p => p.username === updated.username);
+    const i = people.findIndex(p => (p.key || p.username) === (updated.key || updated.username));
     if (i >= 0) people[i] = { ...people[i], ...updated };
 
     document.getElementById("editDialog").close();
@@ -713,7 +761,65 @@ async function saveProfile(event) {
 }
 
 // ==========================================================
-// 9. SETUP (runs once when the page loads)
+// 9. MY SKILLS (quick edit from the top menu)
+// ==========================================================
+function fillQuickSkills() {   // runs each time the My skills dropdown opens
+  setChecked("quickTeach", currentUser.teach || []);
+  setChecked("quickLearn", currentUser.learn || []);
+  setChecked("quickDays", currentUser.days || []);
+  setChecked("quickMode", [currentUser.mode]);
+  document.getElementById("skillsStatus").textContent = currentUser.pinHash
+    ? "" : "Please log out and log in again, then you can edit your profile.";
+}
+
+async function saveSkills(event) {
+  event.preventDefault();
+  const form = event.target;
+  const status = document.getElementById("skillsStatus");
+  const teach = getChecked("quickTeach"), learn = getChecked("quickLearn");
+  const days = getChecked("quickDays"), mode = getChecked("quickMode")[0];
+
+  if (!currentUser.pinHash) { status.textContent = "Please log out and log in again, then you can edit your profile."; return; }
+  if (days.length === 0 || !mode) { status.textContent = "Pick your free days and a mode."; return; }
+  if (teach.length === 0 && learn.length === 0) { status.textContent = "Pick at least one skill to teach or learn."; return; }
+
+  // Same idea as Edit my profile: send a new row with the same username. Only the skills change.
+  const updated = { ...currentUser, teach, learn, days, mode, editedAt: Date.now() };
+  const data = new URLSearchParams();
+  data.append(ENTRY.name, updated.name);
+  data.append(ENTRY.section, updated.section);
+  data.append(ENTRY.teach, teach.join(", "));
+  data.append(ENTRY.learn, learn.join(", "));
+  data.append(ENTRY.days, (updated.days || []).join(", "));
+  data.append(ENTRY.mode, updated.mode);
+  data.append(ENTRY.contact, getContact());
+  data.append(ENTRY.email, "profile-update");
+  data.append(ENTRY.username, updated.username);
+  data.append(ENTRY.pinHash, pinField(updated));
+
+  const button = form.querySelector("button[type=submit]");
+  button.disabled = true;
+  status.textContent = "Saving...";
+  try {
+    await fetch(FORM_POST_URL, { method: "POST", mode: "no-cors", body: data });
+    currentUser = updated;
+    localStorage.setItem("bb_user", JSON.stringify(currentUser));
+    const i = people.findIndex(p => (p.key || p.username) === (updated.key || updated.username));
+    if (i >= 0) people[i] = { ...people[i], ...updated };
+
+    status.textContent = "";
+    window.closeMenus();   // close the dropdown
+    updateAuthUI();   // re-fills Find Match with the new skills
+    renderStats(); renderBrowse(); renderRadar();
+  } catch (error) {
+    console.error(error);
+    status.textContent = "Something went wrong. Check your connection and try again.";
+  }
+  button.disabled = false;
+}
+
+// ==========================================================
+// 10. SETUP (runs once when the page loads)
 // ==========================================================
 function buildChips(boxId, items, group) {
   document.getElementById(boxId).innerHTML = items.map(item =>
@@ -734,7 +840,8 @@ function fillSelect(select, items, allText) {
 const CHIP_GROUPS = [   // [box id, group name, "skills" or "days"]
   ["joinTeach", "joinTeach", "skills"], ["joinLearn", "joinLearn", "skills"], ["joinDays", "joinDays", "days"],
   ["editTeach", "editTeach", "skills"], ["editLearn", "editLearn", "skills"], ["editDays", "editDays", "days"],
-  ["teachChips", "teach", "skills"], ["learnChips", "learn", "skills"], ["dayChips", "day", "days"]
+  ["teachChips", "teach", "skills"], ["learnChips", "learn", "skills"], ["dayChips", "day", "days"],
+  ["quickTeach", "quickTeach", "skills"], ["quickLearn", "quickLearn", "skills"], ["quickDays", "quickDays", "days"]
 ];
 
 function buildAllChips() {   // (re)builds every chip group and keeps what was already ticked
@@ -835,7 +942,7 @@ async function init() {
 
   // Keep the signed-in person's profile up to date (the Sheet can be a few minutes behind)
   if (currentUser) {
-    const i = people.findIndex(p => p.username === currentUser.username);
+    const i = people.findIndex(p => (p.key || p.username) === (currentUser.key || currentUser.username));
     const justEdited = currentUser.editedAt && Date.now() - currentUser.editedAt < 15 * 60 * 1000;
     if (i === -1) {
       people.push(currentUser);                          // just signed up, not in the Sheet yet

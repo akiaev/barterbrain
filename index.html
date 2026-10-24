@@ -19,8 +19,27 @@
       <a class="members-only" href="#matches"><span class="ico">&#129309;</span>Find Match</a>
       <a class="members-only" href="#radar"><span class="ico">&#128225;</span>Skill radar</a>
       <a class="members-only" href="#inbox"><span class="ico">&#128236;</span><span>Inbox<span id="inboxCount"></span></span></a>
+      <button class="members-only" type="button" id="navSkillsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="skillsPanel"><span class="ico">&#9999;&#65039;</span>Quick edit</button>
       <button class="members-only" type="button" id="navRequestBtn" aria-haspopup="true" aria-expanded="false" aria-controls="requestPanel"><span class="ico">&#128161;</span>Request</button>
     </nav>
+    <div class="panel" id="skillsPanel" hidden>
+      <form id="skillsForm">
+        <div class="sk-title">Quick edit</div>
+        <p class="hint">Change your skills, days and mode here. For your name, username, section or contact, go to Account &gt; Manage account.</p>
+        <fieldset><legend>I can teach</legend><div class="chips" id="quickTeach"></div></fieldset>
+        <fieldset><legend>I want to learn</legend><div class="chips" id="quickLearn"></div></fieldset>
+        <p class="hint">Skill missing? Use the Request button in the menu.</p>
+        <fieldset><legend>I am free on</legend><div class="chips" id="quickDays"></div></fieldset>
+        <fieldset><legend>Mode</legend>
+          <div class="chips">
+            <label class="chip-check"><input type="radio" name="quickMode" value="Face-to-face"><span>Face-to-face</span></label>
+            <label class="chip-check"><input type="radio" name="quickMode" value="Online"><span>Online</span></label>
+          </div>
+        </fieldset>
+        <button class="btn block" type="submit">Save changes</button>
+        <p id="skillsStatus" role="status"></p>
+      </form>
+    </div>
     <div class="panel" id="requestPanel" hidden>
       <div class="skill-request">
         <div class="sk-title">Request a new skill</div>
@@ -201,7 +220,7 @@
 
   <section id="radar" class="view members-only">
     <h2>Skill radar</h2>
-    <p>The most wanted skills on campus. Skills with no teacher yet are marked, so you know where you're needed. Tap a skill to see those students in Browse.</p>
+    <p>The most wanted skills on campus. Skills with no teacher yet are marked, so you know where you're needed.<br>Tap a skill to see those students in Browse.</p>
     <div id="radarList"></div>
   </section>
 </main>
@@ -211,6 +230,7 @@
     <h3>Edit my profile</h3>
     <label>Full name <input name="fullName" required maxlength="40"></label>
     <label>Section <input name="section" required maxlength="20"></label>
+    <label>Username <input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_][A-Za-z0-9_.]{2,19}" title="3 to 20 characters: letters, numbers, underscores or dots. It can't start with a dot." autocomplete="off"></label>
     <label>Contact <input name="contact" required maxlength="80"></label>
     <fieldset><legend>I can teach</legend><div class="chips" id="editTeach"></div></fieldset>
     <fieldset><legend>I want to learn</legend><div class="chips" id="editLearn"></div></fieldset>
@@ -236,7 +256,6 @@
     <p id="editStatus" role="status"></p>
   </form>
 </dialog>
-
 <dialog id="requestDialog">
   <form id="requestForm">
     <h3>Request a swap with <span id="reqName"></span></h3>

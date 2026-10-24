@@ -85,8 +85,13 @@ nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cr
 /* Request-a-skill dropdown (under the top-left menu) */
 .panel { position: absolute; left: 0; top: calc(100% + .6rem); width: min(22rem, calc(100vw - 2.4rem)); padding: 1rem; background: var(--cream); color: var(--ink); border-radius: 14px; box-shadow: 0 10px 28px rgba(58, 0, 5, .35); animation: viewIn .15s ease-out; }
 .panel .sk-title { color: var(--maroon-dark); }
-.panel input { padding: .6rem .8rem; font: inherit; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
-.panel input:focus { border-color: var(--maroon); outline: none; }
+.panel input[type="text"] { padding: .6rem .8rem; font: inherit; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
+.panel input[type="text"]:focus { border-color: var(--maroon); outline: none; }
+#skillsPanel { width: min(30rem, calc(100vw - 2.4rem)); max-height: 70vh; overflow-y: auto; }   /* scrolls if there are many skills */
+#skillsPanel fieldset { margin: .7rem 0; }
+#skillsPanel form { display: flex; flex-direction: column; gap: .3rem; }
+#skillsPanel .hint { margin: 0; }
+#skillsPanel .chip-check { font-weight: 400; }
 
 /* Account dropdown */
 .account-menu { position: static; }
@@ -108,6 +113,7 @@ section { max-width: 960px; margin: 0 auto; padding: 2rem 1.2rem 3rem; }
 h2 { font-size: 2rem; margin: 0; color: var(--maroon); line-height: 1.2; }
 .view > h2 { font-size: clamp(1.8rem, 4vw, 2.3rem); }
 .view > h2 + p { margin: .3rem 0 1.4rem; color: var(--muted); max-width: 60ch; }
+#radar > h2 + p { max-width: none; }   /* let the radar description run as wide as the radar box */
 
 /* ===== Hero ===== */
 .hero {
@@ -199,8 +205,8 @@ select, .filters input[type="search"] { padding: .5rem .6rem; font: inherit; col
 .req-contact strong { font-size: 1.05rem; }
 
 /* ===== Skill radar ===== */
-#radarList { background: var(--paper); border: 2px solid var(--maroon); border-radius: 12px; padding: .5rem; box-shadow: var(--shadow); }
-.radar-row { display: grid; grid-template-columns: 9rem 1fr 11rem; gap: .8rem; align-items: center; margin: .2rem 0; }
+#radarList { display: grid; grid-template-columns: 9rem 1fr auto; column-gap: .8rem; background: var(--paper); border: 2px solid var(--maroon); border-radius: 12px; padding: .5rem; box-shadow: var(--shadow); }   /* the last column shrinks to fit the longest note */
+.radar-row { display: grid; grid-template-columns: 9rem 1fr 11rem; grid-template-columns: subgrid; grid-column: 1 / -1; column-gap: .8rem; align-items: center; margin: .2rem 0; }
 button.radar-row { width: 100%; background: none; border: 0; border-radius: 8px; padding: .5rem .6rem; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 button.radar-row:hover { background: rgba(58, 0, 5, .08); }
 .bar { background: #e0d4b6; border-radius: 4px; height: 1.1rem; }
@@ -297,9 +303,11 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
   section { padding: 1.5rem 1rem 2.5rem; }
   .hero { padding: 4rem 1rem 2.4rem; }
   .toggle { display: flex; margin: .8rem 0 0; }
-  .radar-row { grid-template-columns: 7.5rem 1fr; }
+  #radarList { grid-template-columns: 7.5rem 1fr; }
   .radar-row .note { grid-column: 1 / -1; }
 }
 @media (max-width: 360px) {
   .field-row { grid-template-columns: 1fr; }
 }
+/* Section is shown in capitals while typing (the code also saves it in capitals) */
+input[name="section"]:not(:placeholder-shown) { text-transform: uppercase; }
