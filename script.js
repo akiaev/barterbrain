@@ -959,6 +959,7 @@ function openEditProfile() {
   }
   const form = document.getElementById("editForm");
   form.fullName.value = cleanName(currentUser.name);
+  clearChipSearch(["editTeach", "editLearn"]);
   form.section.value = currentUser.section;
   form.username.value = currentUser.username;
   form.contact.value = getContact();
@@ -1038,6 +1039,7 @@ async function saveProfile(event) {
 // 9. MY SKILLS (quick edit from the top menu)
 // ==========================================================
 function fillQuickSkills() {   // runs each time the My skills dropdown opens
+  clearChipSearch(["quickTeach", "quickLearn"]);
   setChecked("quickTeach", currentUser.teach || []);
   setChecked("quickLearn", currentUser.learn || []);
   setChecked("quickDays", currentUser.days || []);
@@ -1131,11 +1133,55 @@ const CHIP_GROUPS = [   // [box id, group name, "skills" or "days"]
   ["quickTeach", "quickTeach", "skills"], ["quickLearn", "quickLearn", "skills"], ["quickDays", "quickDays", "days"]
 ];
 
+// ----- Search box above each skill list (sign-up, edit profile, quick edit) -----
+const SKILL_BOXES = ["joinTeach", "joinLearn", "editTeach", "editLearn", "quickTeach", "quickLearn"];
+
+function setupChipSearch() {   // adds the search box once; it only filters the skill list under it
+  for (const id of SKILL_BOXES) {
+    const box = document.getElementById(id);
+    if (!box || box.previousElementSibling?.classList.contains("chip-search")) continue;
+    const input = document.createElement("input");
+    input.type = "search"; input.className = "chip-search"; input.placeholder = "Search skills...";
+    input.autocomplete = "off"; input.setAttribute("aria-label", "Search skills");
+    input.addEventListener("input", () => applyChipSearch(id));
+    input.addEventListener("keydown", event => { if (event.key === "Enter") event.preventDefault(); });   // Enter must not submit the form
+    const none = document.createElement("p");
+    none.className = "hint chip-none"; none.hidden = true;
+    none.textContent = "No skill found. You can request a new one.";
+    box.before(input);
+    box.after(none);
+  }
+}
+
+function applyChipSearch(id) {   // hides skills that don't match. Ticked skills stay visible so you never lose track of them.
+  const box = document.getElementById(id);
+  const input = box.previousElementSibling;
+  if (!input || !input.classList.contains("chip-search")) return;
+  const query = input.value.trim().toLowerCase();
+  let matches = 0;
+  box.querySelectorAll(".chip-check").forEach(chip => {
+    const checkbox = chip.querySelector("input");
+    const matched = !query || (checkbox.value + " " + chip.textContent).toLowerCase().includes(query);
+    if (matched) matches++;
+    chip.hidden = !(matched || checkbox.checked);
+  });
+  box.nextElementSibling.hidden = !query || matches > 0;
+}
+
+function clearChipSearch(ids) {   // empties the search boxes (used when a popup opens again)
+  for (const id of ids) {
+    const input = document.getElementById(id)?.previousElementSibling;
+    if (input && input.classList.contains("chip-search")) { input.value = ""; applyChipSearch(id); }
+  }
+}
+
 function buildAllChips() {   // (re)builds every chip group and keeps what was already ticked
+  setupChipSearch();
   for (const [boxId, group, kind] of CHIP_GROUPS) {
     const ticked = getChecked(group);
     buildChips(boxId, kind === "days" ? DAYS : allSkills, group);
     setChecked(group, ticked);
+    if (SKILL_BOXES.includes(boxId)) applyChipSearch(boxId);   // keep the current search after a rebuild
   }
   const chosen = el.skillFilter.value || "all";
   fillSelect(el.skillFilter, allSkills, "All skills");

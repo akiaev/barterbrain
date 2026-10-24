@@ -580,3 +580,14 @@ dialog, .panel { overscroll-behavior: contain; }                      /* scrolli
 .contact-hint { display: flex; flex-direction: column; gap: .2rem; font-weight: 400; line-height: 1.45; text-wrap: pretty; }
 .contact-hint strong { font-weight: 600; }
 .nb { white-space: nowrap; }
+/* ===== Skill search box (above the "I can teach" / "I want to learn" lists) ===== */
+.chip-search { width: 100%; margin: .2rem 0 .6rem; padding: .5rem .8rem; font: inherit; font-weight: 400; color: var(--ink); background: #fff; border: 2px solid var(--line); border-radius: 12px; }
+.chip-search:focus { border-color: var(--maroon); outline: none; }
+.chip-none { margin-top: .4rem; }
+/* The little x that appears while typing in ANY search box (skill search, Browse): maroon instead of the browser's grey (Chrome, Edge, Safari; Firefox doesn't show one) */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none; appearance: none; width: 1rem; height: 1rem; margin-left: .4rem; cursor: pointer; background: var(--maroon);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 5l14 14M19 5L5 19' stroke='black' stroke-width='3.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 5l14 14M19 5L5 19' stroke='black' stroke-width='3.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+input[type="search"]::-webkit-search-cancel-button:hover { background: var(--crimson); }
