@@ -394,3 +394,11 @@ input[name="section"]:not(:placeholder-shown) { text-transform: uppercase; }
 #radar > .radar-intro { max-width: none; margin: 0 0 .35rem; color: var(--muted); font-size: 1rem; }
 #radar > .radar-tip { margin-bottom: 1.1rem; font-size: .95rem; }
 #radar > .radar-tip strong { color: var(--maroon); }
+
+/* ===== Footer (bottom of the home page): same width and side gaps as the "How it works" cards (.steps) ===== */
+.site-footer { margin: 0 auto 1.5rem; padding: 2rem 1.2rem; width: min(100% - 2.4rem, 960px - 2.4rem); text-align: center; border-radius: 16px; background: var(--maroon); color: var(--cream); }
+.footer-name { font-family: var(--logo-font); font-size: 2rem; line-height: 1.1; }
+.footer-school { margin-top: .3rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
+.footer-team { display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem 1.4rem; margin: 1.1rem 0 0; padding: 0; list-style: none; }
+.footer-copy { margin: 1.1rem 0 0; padding-top: 1rem; border-top: 1px solid rgba(241, 232, 210, .25); font-size: .9rem; color: rgba(241, 232, 210, .75); }
+@media (max-width: 700px) { .footer-team { flex-direction: column; gap: .2rem; } }
