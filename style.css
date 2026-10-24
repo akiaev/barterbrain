@@ -1,5 +1,4 @@
-/* ===== Fonts ===== */
-/* Put the downloaded Bugaki font file inside the fonts folder. */
+/* <3 Fonts <3 */
 @font-face {
   font-family: "Bugaki";
   src: url("fonts/BugakiRegular.ttf") format("truetype");
@@ -7,13 +6,13 @@
   font-display: swap;
 }
 
-/* ===== Colors ===== */
+/* <3 Colors <3 */
 :root {
   --maroon-dark: #3a0005;
-  --maroon: #3a0005;   /* main colour, same as the pills */
-  --crimson: #8e0b33;   /* only for small error text and the radar bars */
+  --maroon: #3a0005;   /* main color */
+  --crimson: #8e0b33;   /* for small error text and the radar bars */
   --maroon-hover: #5a0a14;
-  --header-h: 5rem;      /* height of the floating header: used to make the account screens fit exactly */
+  --header-h: 5rem;      /* height of the floating header, used it to make the account screens fit exactly */
   --bottom-bar: 0rem;    /* phone tab bar height (only when logged in) */
   --page-bottom: 0rem;   /* all the space the phone page reserves under its content (tab bar + gap) */
   --cream: #f1e8d2;
@@ -23,13 +22,13 @@
   --muted: #6b5459;
   --line: rgba(58, 0, 5, .28);
   --shadow: 0 2px 0 rgba(58, 0, 5, .14);
-  --logo-font: "Bugaki", Georgia, "Times New Roman", serif;   /* ONLY for the project name */
+  --logo-font: "Bugaki", Georgia, "Times New Roman", serif;   /* for "Barter Brain" to */
   --display: "Inter Tight", "Source Sans 3", system-ui, sans-serif;   /* headlines */
 }
 
-/* ===== Base styles ===== */
+/* <3 Base styles <3 */
 * { box-sizing: border-box; }
-[hidden] { display: none !important; }   /* makes the hidden attribute always win */
+[hidden] { display: none !important; }   /* makes the hidden attribute always win. thank u css essentials <3 */
 html { scroll-behavior: smooth; }
 body {
   margin: 0; min-height: 100vh; min-height: 100dvh;
@@ -44,18 +43,18 @@ button, input, select, textarea { font-family: inherit; }
 :focus-visible { outline: 3px solid var(--crimson); outline-offset: 2px; }
 .chip-check input:focus-visible + span { outline: 3px solid var(--crimson); outline-offset: 2px; }
 
-/* ===== Header: two floating pills (logo + menu on the left, Login / Sign up on the right) ===== */
+/* <3 Header: two floating pills (logo + menu sa left, Login / Sign up sa right) <3 */
 .site-header {
   position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between;
-  gap: .8rem; padding: .8rem 1.2rem; pointer-events: none; align-items: stretch; height: var(--header-h);   /* the empty gap between the pills stays clickable-through */
+  gap: .8rem; padding: .8rem 1.2rem; pointer-events: none; align-items: stretch; height: var(--header-h);   /* empty gap between the pills stays clickable-through */
 }
 .pill {
   pointer-events: auto; display: flex; align-items: center; gap: .4rem 1.4rem; min-height: 3.4rem; padding: .45rem 1.2rem;
   background: var(--maroon-dark); border-radius: 999px; box-shadow: 0 6px 20px rgba(58, 0, 5, .22);
 }
-.pill-right { position: relative; padding: .4rem; gap: .2rem; }   /* even padding all round so the button sits centred */
+.pill-right { position: relative; padding: .4rem; gap: .2rem; }   /* even padding all round so the button sits centered */
 .logo { display: inline-flex; align-items: center; gap: .6rem; color: var(--cream); font-size: 1.25rem; line-height: 1; text-decoration: none; }
-.logo-img { height: 2.2rem; width: auto; display: block; flex: none; }   /* change 2rem to resize the logo */
+.logo-img { height: 2.2rem; width: auto; display: block; flex: none; }   /* change 2.2rem to resize the logo */
 .logo-text { font-family: var(--logo-font); font-weight: 400; letter-spacing: 0; line-height: 1; position: relative; top: 0; }   /* if the name looks too high or low next to the logo, try top: .05em or top: -.05em */
 nav { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; padding-right: .5rem; }
 body:not(.signed-in) nav { display: none; }   /* the menu only shows once signed in */
@@ -109,7 +108,7 @@ nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cr
 .dots-btn { display: none; }   /* the ":" menu button only exists on phones */
 #navMoreBtn, .more-panel { display: none; }   /* "More" only exists on phones */
 
-/* ===== App screens (one page at a time) ===== */
+/* <3 App screens (one page at a time) <3 */
 section { max-width: 960px; margin: 0 auto; padding: 2rem 1.2rem 3rem; }
 .view { display: none; }
 .view.active { display: block; animation: viewIn .3s cubic-bezier(.2, .8, .2, 1); }
@@ -120,7 +119,7 @@ h2 { font-size: 2rem; margin: 0; color: var(--maroon); line-height: 1.2; }
 .view > h2 { font-size: clamp(1.8rem, 4vw, 2.3rem); }
 .view > h2 + p { margin: .3rem 0 1.4rem; color: var(--muted); max-width: 60ch; }
 
-/* ===== Hero ===== */
+/* <3 Hero <3 */
 .hero {
   text-align: center; padding: 4.5rem 1.2rem 3.5rem;
 }
@@ -145,7 +144,7 @@ body {
 .hero .btn.ghost { background: transparent; color: var(--maroon); }
 .hero .btn.ghost:hover { background: rgba(58, 0, 5, .1); border-color: var(--maroon); }
 
-/* ===== How it works ===== */
+/* <3 How it works <3 */
 .steps { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.2rem 3rem; text-align: center; }
 .steps-row { list-style: none; padding: 0; margin: 1.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; text-align: left; }
 .steps-row li { background: var(--paper); border: 2px solid var(--maroon); border-radius: 12px; padding: 1.1rem; box-shadow: var(--shadow); }
@@ -153,7 +152,7 @@ body {
 .steps-row h3 { margin: .5rem 0 .2rem; color: var(--maroon); }
 .steps-row p { margin: 0; }
 
-/* ===== Buttons ===== */
+/* <3 Buttons <3 */
 .btn {
   display: inline-block; vertical-align: middle; padding: .65rem 1.4rem; border: 2px solid var(--maroon); border-radius: 8px;
   background: var(--maroon); color: var(--cream); font-size: 1rem; line-height: 1.2; text-decoration: none; cursor: pointer;
@@ -167,7 +166,7 @@ body {
 .btn.ghost-dark { background: transparent; color: var(--maroon); margin-left: .5rem; }
 .btn.ghost-dark:hover { background: rgba(58, 0, 5, .1); border-color: var(--maroon); }
 
-/* ===== Skill chips and checkboxes ===== */
+/* <3 Skill chips and checkboxes <3 */
 .chip { display: inline-block; padding: .15rem .75rem; border-radius: 99px; background: var(--maroon); color: var(--cream); font-size: .9rem; margin: 0 .3rem .3rem 0; }
 .chip.want { background: var(--gold); color: var(--ink); }
 .chips { display: flex; flex-wrap: wrap; gap: .45rem; }
@@ -176,7 +175,7 @@ body {
 .chip-check span:hover { background: rgba(58, 0, 5, .1); }
 .chip-check input:checked + span { background: var(--maroon); color: var(--cream); }
 
-/* ===== Forms and filters ===== */
+/* <3 Forms and filters <3 */
 fieldset { border: 2px solid var(--line); border-radius: 12px; margin: 1rem 0; padding: .6rem 1rem 1rem; }
 legend { padding: 0 .4rem; color: var(--maroon); }
 select, .filters input[type="search"] { padding: .5rem .6rem; font: inherit; color: var(--ink); background: #fff; border: 2px solid var(--maroon); border-radius: 8px; }
@@ -194,7 +193,7 @@ label .hint { font-weight: 400; }   /* the contact format guide sits inside a la
 [role="status"] { margin: .8rem 0 0; font-weight: 600; color: var(--crimson); }
 [role="status"]:empty { display: none; }
 
-/* ===== Cards ===== */
+/* <3 Cards <3 */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
 .cards > p, #radarList > p { grid-column: 1 / -1; margin: 0; padding: 2rem 1rem; text-align: center; color: var(--muted); border: 2px dashed var(--line); border-radius: 12px; }
 .card { background: var(--paper); border: 2px solid var(--maroon); border-radius: 12px; padding: 1.1rem; box-shadow: var(--shadow); }
@@ -205,7 +204,7 @@ label .hint { font-weight: 400; }   /* the contact format guide sits inside a la
 .badge { display: inline-block; padding: .1rem .6rem; border-radius: 4px; font-size: .85rem; font-weight: 700; background: var(--gold); color: var(--ink); margin-bottom: .4rem; }
 .badge.oneway { background: #e3d9c0; }
 
-/* ===== Inbox request cards ===== */
+/* <3 Inbox request cards <3 */
 #inboxList { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .card.request-card, .card.match-card { display: flex; flex-direction: column; gap: .8rem; }
 .card.request-card > div + div, .card.match-card > div + div { margin-top: 0; }
@@ -224,7 +223,7 @@ label .hint { font-weight: 400; }   /* the contact format guide sits inside a la
 .req-msg { margin: 0; padding: .6rem .8rem; border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; background: rgba(58, 0, 5, .06); overflow-wrap: anywhere; }
 .req-contact { display: flex; flex-direction: column; padding: .6rem .8rem; border-radius: 10px; background: var(--maroon); color: var(--cream); overflow-wrap: anywhere; }
 .inbox-sub { margin: 2rem 0 .2rem; font-size: 1.4rem; color: var(--maroon-dark); }
-.card.request-card .btn.small { align-self: flex-end; margin: .3rem 0 0; min-height: 2.8rem; padding: .5rem 1.3rem; border: 2px solid var(--maroon-dark); border-radius: 999px; background: var(--gold); color: var(--maroon-dark); font-size: 1rem; box-shadow: 0 3px 0 var(--maroon-dark); cursor: pointer; }   /* bottom-right, gold with a maroon edge so it reads as a button */
+.card.request-card .btn.small { align-self: flex-end; margin: auto 0 0; min-height: 2.8rem; padding: .5rem 1.3rem; border: 2px solid var(--maroon-dark); border-radius: 999px; background: var(--gold); color: var(--maroon-dark); font-size: 1rem; box-shadow: 0 3px 0 var(--maroon-dark); cursor: pointer; }   /* bottom-right, gold with a maroon edge so it reads as a button */
 .card.request-card .btn.small:not(.ghost-dark)::before { content: "\2713"; margin-right: .45rem; font-weight: 700; }
 .card.request-card .btn.small:hover { background: #dba93a; }
 .card.request-card .btn.small:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--maroon-dark); }
@@ -235,7 +234,7 @@ label .hint { font-weight: 400; }   /* the contact format guide sits inside a la
 .req-contact .req-label { margin-bottom: .1rem; color: rgba(241, 232, 210, .75); }
 .req-contact strong { font-size: 1.05rem; }
 
-/* ===== Skill radar ===== */
+/* <3 Skill radar <3 */
 #radarList { display: grid; grid-template-columns: 9rem 1fr auto; column-gap: .8rem; background: var(--paper); border: 2px solid var(--maroon); border-radius: 12px; padding: .5rem; box-shadow: var(--shadow); }   /* the last column shrinks to fit the longest note */
 .radar-row { display: grid; grid-template-columns: 9rem 1fr 11rem; grid-template-columns: subgrid; grid-column: 1 / -1; column-gap: .8rem; align-items: center; margin: .2rem 0; }
 button.radar-row { width: 100%; background: none; border: 0; border-radius: 8px; padding: .5rem .6rem; font: inherit; color: inherit; text-align: left; cursor: pointer; }
@@ -244,7 +243,7 @@ button.radar-row:hover { background: rgba(58, 0, 5, .08); }
 .bar div { background: var(--crimson); height: 100%; border-radius: 4px; }
 .need { color: var(--crimson); font-weight: 700; }
 
-/* ===== Account / sign-up (form on the left, logo on the right) ===== */
+/* <3 Account / sign-up (form sa left, logo sa right) <3 */
 #join { max-width: none; padding: 0; }
 .auth-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; padding: 0 1.5rem 1.5rem; align-items: start; min-height: calc(100dvh - var(--header-h) - var(--bottom-bar)); }
 .auth-side { display: flex; align-items: center; justify-content: center; min-height: calc(100dvh - var(--header-h) - var(--bottom-bar) - 1.5rem); padding: .5rem 1rem; }
@@ -309,7 +308,7 @@ button.radar-row:hover { background: rgba(58, 0, 5, .08); }
 .skill-request-row input { flex: 1; min-width: 0; }
 .skill-request-row .btn.small { margin: 0; padding: 0 1.1rem; white-space: nowrap; }
 
-/* ===== Popups (edit profile, swap request) ===== */
+/* <3 Popups (edit profile, swap request) <3 */
 dialog { border: 2px solid var(--maroon); border-radius: 14px; background: var(--paper); color: var(--ink); width: calc(100% - 2rem); max-width: 480px; padding: 1.3rem; max-height: 90vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); }
 dialog::backdrop { background: rgba(58, 0, 5, .6); }
 dialog h3 { margin: 0 0 .4rem; color: var(--maroon); }
@@ -319,14 +318,14 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
 .dialog-actions { display: flex; gap: .5rem; }
 .dialog-actions .btn.ghost-dark { margin-left: 0; }
 
-/* ===== Short screens: tighten the account screens so nothing needs scrolling ===== */
+/* <3 Short screens: tighten the account screens so nothing needs scrolling <3 */
 @media (max-height: 720px) {
   .auth-head { margin-bottom: .5rem; }
   .auth-head p { display: none; }
   .auth-form, .signup-step { gap: .5rem; }
 }
 
-/* ===== Tablet and phone: hide the logo panel on sign-up ===== */
+/* <3 Tablet and phone: hide the logo panel on sign-up <3 */
 @media (max-width: 800px) {
   .auth-layout { grid-template-columns: 1fr; padding: 0; }
   .auth-art { display: none; }
@@ -334,7 +333,7 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
   .auth-side { min-height: calc(100dvh - var(--header-h) - var(--page-bottom)); padding: 1rem; }
 }
 
-/* ===== Phone: the menu becomes a bottom tab bar ===== */
+/* <3 Phone: the menu becomes a bottom tab bar <3 */
 @media (max-width: 700px) {
   .site-header { padding: calc(.6rem + env(safe-area-inset-top, 0px)) calc(.7rem + env(safe-area-inset-right, 0px)) .6rem calc(.7rem + env(safe-area-inset-left, 0px)); }   /* sits below the iPhone notch / status bar */
   .pill { padding: .35rem .8rem; min-height: 0; }
@@ -410,7 +409,7 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
 /* Section is shown in capitals while typing (the code also saves it in capitals) */
 input[name="section"]:not(:placeholder-shown) { text-transform: uppercase; }
 
-/* ===== Browse filters ===== */
+/* <3 Browse filters <3 */
 /* Days stay on ONE row on phones */
 @media (max-width: 700px) {
   .filters .day-filter .chips { flex-wrap: nowrap; gap: .25rem; }
@@ -425,12 +424,12 @@ input[name="section"]:not(:placeholder-shown) { text-transform: uppercase; }
   #skillFilter option:hover, #skillFilter option:focus { background: var(--gold); color: var(--ink); }
 }
 
-/* ===== Skill radar intro: two plain muted lines, same size, no bold ===== */
+/* <3 Skill radar intro: two plain muted lines, same size, no bold <3 */
 #radar > .radar-intro { max-width: none; margin: 0 0 .35rem; color: var(--muted); font-size: 1rem; }
 #radar > .radar-tip { margin-bottom: 1.1rem; font-size: .95rem; }
 #radar > .radar-tip strong { color: var(--maroon); }
 
-/* ===== Footer (bottom of the home page): same width and side gaps as the "How it works" cards (.steps) ===== */
+/* <3 Footer (bottom of the home page): same width and side gaps as the "How it works" cards (.steps) <3 */
 .site-footer { margin: 0 auto 1.5rem; padding: 2rem 1.2rem; width: min(100% - 2.4rem, 960px - 2.4rem); text-align: center; border-radius: 16px; background: var(--maroon); color: var(--cream); }
 .footer-name { font-family: var(--logo-font); font-size: 2rem; line-height: 1.1; }
 .footer-school { margin-top: .3rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); }
@@ -438,9 +437,9 @@ input[name="section"]:not(:placeholder-shown) { text-transform: uppercase; }
 .footer-copy { margin: 1.1rem 0 0; padding-top: 1rem; border-top: 1px solid rgba(241, 232, 210, .25); font-size: .9rem; color: rgba(241, 232, 210, .75); }
 @media (max-width: 700px) { .footer-team { flex-direction: column; gap: .2rem; } }
 
-/* ==========================================================
+/* <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3
    Dashboard (home page when logged in)
-   ========================================================== */
+   <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 */
 body:not(.signed-in) .dashboard { display: none; }
 body.signed-in .guest-home { display: none; }
 .dash-hero { padding-bottom: 1.4rem; }
@@ -491,9 +490,9 @@ body.signed-in .guest-home { display: none; }
 .match-profile:empty { display: none; }
 .match-edit-hint { margin: .6rem 0 1.1rem; }
 
-/* ==========================================================
+/* <3 <3 <3 <3
    Animations
-   ========================================================== */
+   <3 <3 <3 <3 */
 /* Dropdowns and sheets: their pop in/out is done in script.js (setPanel) */
 .panel { transform-origin: top left; }
 .menu { transform-origin: top right; }
@@ -572,12 +571,12 @@ dialog[open]::backdrop { background: rgba(58, 0, 5, .6); }
 .req-summary { display: flex; flex-direction: column; gap: .8rem; padding: .8rem 1rem; border-radius: 12px; background: rgba(58, 0, 5, .06); }
 .req-summary:empty { display: none; }
 
-/* ===== Scroll lock: while a popup or dropdown is open, only the popup scrolls, never the page behind it ===== */
+/* <3 Scroll lock: while a popup or dropdown is open, only the popup scrolls, never the page behind it <3 */
 html.scroll-locked { overflow: hidden; }   /* only html: locking body too would un-stick the header and send it (and its menus) back to the top of the page */
 html.scroll-locked body { padding-right: var(--scrollbar-w, 0px); }   /* stops the page jumping sideways when the scrollbar disappears */
 dialog, .panel { overscroll-behavior: contain; }                      /* scrolling past the end of a popup doesn't scroll the page */
 
-/* ===== Logged-in home on a computer: everything fits on one screen, so the page doesn't scroll =====
+/* <3 Logged-in home on a computer: everything fits on one screen, so the page doesn't scroll <3
    Sizes follow the window HEIGHT (vh), so the logo, headline, circles and footer shrink on shorter screens. */
 @media (min-width: 900px) {
   body.signed-in.on-home #home.active { display: flex; flex-direction: column; min-height: calc(100dvh - var(--header-h)); }
@@ -604,7 +603,7 @@ dialog, .panel { overscroll-behavior: contain; }                      /* scrolli
 .contact-hint { display: flex; flex-direction: column; gap: .2rem; font-weight: 400; line-height: 1.45; text-wrap: pretty; }
 .contact-hint strong { font-weight: 600; }
 .nb { white-space: nowrap; }
-/* ===== Skill search box (above the "I can teach" / "I want to learn" lists) ===== */
+/* <3 Skill search box (above the "I can teach" / "I want to learn" lists) <3 */
 .chip-search { width: 100%; margin: .2rem 0 .6rem; padding: .5rem .8rem; font: inherit; font-weight: 400; color: var(--ink); background: #fff; border: 2px solid var(--line); border-radius: 12px; }
 .chip-search:focus { border-color: var(--maroon); outline: none; }
 .chip-none { margin-top: .4rem; }

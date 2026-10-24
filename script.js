@@ -390,7 +390,7 @@ async function sha256(text) {   // scrambles text so the raw PIN is never sent o
   const bytes = new TextEncoder().encode(text);
   const buffer = await crypto.subtle.digest("SHA-256", bytes);
   const hex = [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, "0")).join("");
-  return "h" + hex;             // the "h" stops Sheets from treating it like a number
+  return "h" + hex;             // "h" stops Sheets from treating it like a number
 }
 function pinHashOf(username, pin) { return sha256(`${SALT}|${username}|${pin}`); }   // username here = the account key
 
