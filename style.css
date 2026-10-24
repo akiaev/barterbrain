@@ -201,8 +201,14 @@ label .hint { font-weight: 400; }   /* the contact format guide sits inside a la
 
 /* ===== Inbox request cards ===== */
 #inboxList { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
-.card.request-card { display: flex; flex-direction: column; gap: .8rem; }
-.card.request-card > div + div { margin-top: 0; }
+.card.request-card, .card.match-card { display: flex; flex-direction: column; gap: .8rem; }
+.card.request-card > div + div, .card.match-card > div + div { margin-top: 0; }
+.match-card .badge { margin-bottom: 0; white-space: nowrap; }
+.match-days { font-size: .95rem; color: var(--muted); }
+.chip.day { background: transparent; color: var(--maroon); border: 2px solid var(--maroon); padding: .05rem .7rem; font-weight: 700; }
+.match-card .btn.small { align-self: flex-end; margin: .3rem 0 0; min-height: 2.8rem; padding: .5rem 1.3rem; border: 2px solid var(--maroon-dark); border-radius: 999px; background: var(--gold); color: var(--maroon-dark); font-size: 1rem; box-shadow: 0 3px 0 var(--maroon-dark); cursor: pointer; }   /* Connect: same look as Mark as completed */
+.match-card .btn.small:hover { background: #dba93a; }
+.match-card .btn.small:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--maroon-dark); }
 .req-head { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
 .req-head h3 { font-size: 1.3rem; }
 .req-date { font-size: .85rem; color: var(--muted); white-space: nowrap; }

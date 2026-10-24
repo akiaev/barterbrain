@@ -239,23 +239,28 @@ function renderBrowse() {
 }
 
 // ----- Find matches section -----
+function daysRow(days) {   // "Shared days" row, used by match cards and inbox cards
+  const body = days.length
+    ? chipsHTML(days, "day")
+    : `<div class="match-days">none yet</div>`;
+  return `<div class="req-row"><div class="req-label">Shared days</div>${body}</div>`;
+}
+
 function matchCard(result, index) {
   const { person, theyCanTeachMe, iCanTeachThem, sharedDays, isMutual } = result;
 
   const badgeText = isMutual ? "Mutual swap!" : "One-way match";
-  const sharedText = sharedDays.length ? esc(sharedDays.join(", ")) : "none yet";
-  const teachMe = theyCanTeachMe.length
-    ? `<div>They can teach you:<br>${chipsHTML(theyCanTeachMe, "")}</div>` : "";
-  const teachThem = iCanTeachThem.length
-    ? `<div>You can teach them:<br>${chipsHTML(iCanTeachThem, "want")}</div>` : "";
+  const row = (title, body) => `<div class="req-row"><div class="req-label">${title}</div>${body}</div>`;
+  const teachMe = theyCanTeachMe.length ? row("They can teach you", chipsHTML(theyCanTeachMe, "")) : "";
+  const teachThem = iCanTeachThem.length ? row("You can teach them", chipsHTML(iCanTeachThem, "want")) : "";
 
-  return `<article class="card ${isMutual ? "mutual" : ""}">
-    <span class="badge ${isMutual ? "" : "oneway"}">${badgeText}</span>
-    <h3>${esc(firstName(person.name))}</h3>
-    <div class="meta">${esc(person.section)} | Shared days: ${sharedText}</div>
+  return `<article class="card match-card ${isMutual ? "mutual" : ""}">
+    <div class="req-head"><h3>${esc(firstName(person.name))}</h3><span class="badge ${isMutual ? "" : "oneway"}">${badgeText}</span></div>
+    <div class="req-user">${esc(person.section)}</div>
     ${teachMe}
     ${teachThem}
-    <button class="btn small" type="button" data-index="${index}">${sentTo().includes(person.username) ? "Request again" : "Request intro"}</button>
+    ${daysRow(sharedDays)}
+    <button class="btn small" type="button" data-index="${index}">${sentTo().includes(person.username) ? "Connect again" : "Connect"}</button>
   </article>`;
 }
 
@@ -629,13 +634,18 @@ function setRequestDone(id, isDone) {
 }
 
 function requestCard(r, isDone) {
+  const sender = people.find(p => p.username === r.from);   // their profile gives us section and free days
+  const myDays = currentUser ? (currentUser.days || []) : [];
+  const shared = sender ? sender.days.filter(d => myDays.includes(d)) : [];
+  const userLine = `@${esc(r.from)}${sender && sender.section ? ` | ${esc(sender.section)}` : ""}`;
   const action = isDone
     ? `<button class="btn small ghost-dark" type="button" data-undo="${esc(r.id)}">Move back to inbox</button>`
     : `<button class="btn small" type="button" data-done="${esc(r.id)}">Mark as completed</button>`;
   return `<article class="card request-card${isDone ? " is-done" : ""}">
     <div class="req-head"><h3>${esc(firstName(r.fromName))}</h3><span class="req-date">${isDone ? "Completed | " : ""}${esc(r.time)}</span></div>
-    <div class="req-user">@${esc(r.from)}</div>
+    <div class="req-user">${userLine}</div>
     ${requestSkills(r.skills)}
+    ${sender ? daysRow(shared) : ""}
     ${r.message ? `<div class="req-row"><div class="req-label">Message</div><p class="req-msg">${esc(r.message)}</p></div>` : ""}
     <div class="req-contact"><span class="req-label">Contact</span><strong>${esc(r.contact)}</strong></div>
     ${action}
