@@ -41,5 +41,5 @@ const SALT = "markbeaace";   // any random text. Pick one and never change it af
 
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const SKILLS = ["python", "c++", "html/css", "javascript", "excel", "photoshop", "canva", "video editing",
+const SKILLS = ["python", "c++", "html/css", "javascript", "excel", "ms word", "photoshop", "canva", "ui/ux", "video editing",
   "guitar", "piano", "drawing", "math tutoring", "public speaking", "essay writing", "filipino", "japanese", "cooking"];

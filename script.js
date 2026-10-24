@@ -48,13 +48,20 @@ function esc(text) {            // stops pasted HTML from running on the page
   return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");   // quotes too, so it is safe inside attributes
 }
 function firstName(name) { return (name || "").trim().split(/\s+/)[0]; }   // only first names are shown to other people
-function label(skill) { return skill.charAt(0).toUpperCase() + skill.slice(1); }
+const SKILL_LABELS = {
+  "html/css": "HTML/CSS",
+  "excel": "MS Excel",
+  "ms word": "MS Word",
+  "ui/ux": "UI/UX"
+};   // skills that need special capitals; add more like  "css": "CSS"
+function label(skill) { return SKILL_LABELS[skill.toLowerCase()] || skill.charAt(0).toUpperCase() + skill.slice(1); }
 function toList(cell) { return cell.split(",").map(s => s.trim().toLowerCase()).filter(Boolean); }
 // Contact and "already requested" are saved PER ACCOUNT, so two accounts on one device never mix
 function accountKey() { return currentUser ? (currentUser.key || currentUser.username) : ""; }   // never changes, even if the username does
 function getContact() { return currentUser ? localStorage.getItem("bb_contact_" + accountKey()) || "" : ""; }
 function setContact(username, value) { localStorage.setItem("bb_contact_" + accountKey(), value); }
 function sentKey() { return "bb_sent_" + accountKey(); }
+function doneKey() { return "bb_done_" + accountKey(); }   // requests this account marked as completed (saved on this device)
 function cleanSection(text) { return text.trim().replace(/\s+/g, " ").toUpperCase(); }   // " cs  1-1 " becomes "CS 1-1"
 function chipsHTML(list, extraClass) {
   return list.map(s => `<span class="chip ${extraClass}">${esc(label(s))}</span>`).join("");
@@ -348,7 +355,9 @@ function updateAuthUI() {
   document.getElementById("welcome").hidden = !signedIn;
   document.querySelectorAll(".members-only").forEach(item => item.hidden = !signedIn);
   if (signedIn) document.getElementById("welcomeName").textContent = firstName(currentUser.name);
-  document.getElementById("startBtn").href = signedIn ? "#matches" : "#join";
+  const startBtn = document.getElementById("startBtn");   // one hero button: sign-up for guests, matches for members
+  startBtn.href = signedIn ? "#matches" : "#join";
+  startBtn.textContent = signedIn ? "Find my matches" : "Start Trading";
   document.querySelectorAll(".guest-only").forEach(item => item.hidden = signedIn);
   document.body.classList.toggle("signed-in", signedIn);
   allSkills = computeSkills();
@@ -513,13 +522,31 @@ function connectAccounts() {
   document.getElementById("editForm").addEventListener("submit", saveProfile);
   document.getElementById("editCancel").addEventListener("click", () => document.getElementById("editDialog").close());
   document.getElementById("skillsForm").addEventListener("submit", saveSkills);
+  document.getElementById("inbox").addEventListener("click", event => {   // Mark as completed / Move back to inbox
+    const done = event.target.closest("[data-done]");
+    const undo = event.target.closest("[data-undo]");
+    if (done) setRequestDone(done.dataset.done, true);
+    if (undo) setRequestDone(undo.dataset.undo, false);
+  });
+  // Tap outside a popup (the dimmed area) to close it: Edit my profile and Request a swap
+  document.querySelectorAll("dialog").forEach(dialog => {
+    const outside = event => {
+      const box = dialog.getBoundingClientRect();
+      return event.target === dialog && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom);
+    };
+    let pressedOutside = false;   // both the press and the release must happen outside, so dragging a text selection never closes it
+    dialog.addEventListener("pointerdown", event => { pressedOutside = outside(event); });
+    dialog.addEventListener("click", event => { if (pressedOutside && outside(event)) dialog.close(); pressedOutside = false; });
+  });
   // Dropdowns: Account (Manage account / Log out) and Request a skill. Only one is open at a time,
   // and the rest of the page dims while one is open.
   const backdrop = document.getElementById("menuBackdrop");
   const menus = {
     account: { button: document.getElementById("accountBtn"), panel: document.getElementById("accountDropdown") },
     skills: { button: document.getElementById("navSkillsBtn"), panel: document.getElementById("skillsPanel") },
-    request: { button: document.getElementById("navRequestBtn"), panel: document.getElementById("requestPanel") }
+    request: { button: document.getElementById("navRequestBtn"), panel: document.getElementById("requestPanel") },
+    more: { button: document.getElementById("navMoreBtn"), panel: document.getElementById("morePanel") },   // phone only
+    guest: { button: document.getElementById("guestMenuBtn"), panel: document.getElementById("guestDropdown") }   // phone only: the ":" button for guests
   };
   const openMenu = which => {   // which = "account", "skills", "request" or null (close everything)
     for (const [name, menu] of Object.entries(menus)) {
@@ -536,8 +563,12 @@ function connectAccounts() {
     menu.button.addEventListener("click", () => openMenu(menu.panel.hidden ? name : null));
   }
   document.addEventListener("click", event => {
-    if (!event.target.closest("#accountBtn, #accountDropdown, #navSkillsBtn, #skillsPanel, #navRequestBtn, #requestPanel")) openMenu(null);
+    if (!event.target.closest("#accountBtn, #accountDropdown, #navSkillsBtn, #skillsPanel, #navRequestBtn, #requestPanel, #navMoreBtn, #morePanel, #guestMenuBtn, #guestDropdown")) openMenu(null);
   });
+  // Phone "More" sheet: its items open the Quick edit / Request panels
+  document.querySelectorAll("[data-more]").forEach(item =>
+    item.addEventListener("click", () => openMenu(item.dataset.more)));
+  menus.guest.panel.querySelectorAll("a").forEach(link => link.addEventListener("click", () => openMenu(null)));
   document.addEventListener("keydown", event => { if (event.key === "Escape") openMenu(null); });
   menus.account.panel.querySelector("a").addEventListener("click", () => openMenu(null));
   document.getElementById("menuSignOut").addEventListener("click", () => { openMenu(null); signOut(); location.hash = "#home"; });
@@ -562,6 +593,7 @@ async function loadRequests() {
     const text = await response.text();
     if (!response.ok || text.trim().startsWith("<")) throw new Error("The link did not return CSV data");
     return parseCSV(text).slice(1).filter(r => r[REQUEST_COLS.to]).map(r => ({
+      id: [(r[REQUEST_COLS.time] || "").trim(), (r[REQUEST_COLS.from] || "").trim(), r[REQUEST_COLS.to].trim().toLowerCase()].join("|"),   // identifies a request so it can be marked completed
       time: (r[REQUEST_COLS.time] || "").trim().split(" ")[0],
       to: r[REQUEST_COLS.to].trim().toLowerCase(),
       from: (r[REQUEST_COLS.from] || "").trim(),
@@ -586,24 +618,46 @@ function requestSkills(text) {   // turns "Can teach you: A. Wants to learn: B" 
     || `<div class="req-row">${esc(text)}</div>`;
 }
 
-function requestCard(r) {
-  return `<article class="card request-card">
-    <div class="req-head"><h3>${esc(firstName(r.fromName))}</h3><span class="req-date">${esc(r.time)}</span></div>
+function doneIds() {
+  try { return JSON.parse(localStorage.getItem(doneKey()) || "[]"); } catch (error) { return []; }
+}
+function setRequestDone(id, isDone) {
+  const rest = doneIds().filter(item => item !== id);
+  localStorage.setItem(doneKey(), JSON.stringify(isDone ? rest.concat(id) : rest));
+  renderInbox();
+}
+
+function requestCard(r, isDone) {
+  const action = isDone
+    ? `<button class="btn small ghost-dark" type="button" data-undo="${esc(r.id)}">Move back to inbox</button>`
+    : `<button class="btn small" type="button" data-done="${esc(r.id)}">Mark as completed</button>`;
+  return `<article class="card request-card${isDone ? " is-done" : ""}">
+    <div class="req-head"><h3>${esc(firstName(r.fromName))}</h3><span class="req-date">${isDone ? "Completed | " : ""}${esc(r.time)}</span></div>
     <div class="req-user">@${esc(r.from)}</div>
     ${requestSkills(r.skills)}
     ${r.message ? `<div class="req-row"><div class="req-label">Message</div><p class="req-msg">${esc(r.message)}</p></div>` : ""}
     <div class="req-contact"><span class="req-label">Contact</span><strong>${esc(r.contact)}</strong></div>
+    ${action}
   </article>`;
 }
 
 function renderInbox() {
   const mine = currentUser ? requests.filter(r => r.to === currentUser.username || r.to === (currentUser.key || currentUser.username)).reverse() : [];  // newest first
-  document.getElementById("inboxCount").textContent = mine.length ? ` (${mine.length})` : "";
+  const finished = doneIds();
+  const pending = mine.filter(r => !finished.includes(r.id));
+  const completed = mine.filter(r => finished.includes(r.id));
+  const inboxCount = document.getElementById("inboxCount");   // only NEW requests count as notifications
+  inboxCount.textContent = pending.length ? ` (${pending.length})` : "";
+  inboxCount.dataset.n = pending.length || "";   // the phone tab bar shows this as a little badge
   document.getElementById("welcomeRequests").textContent =
-    mine.length ? `You have ${mine.length} swap request(s). Check your Inbox.` : "";
-  document.getElementById("inboxList").innerHTML = mine.length
-    ? mine.map(requestCard).join("")
-    : "<p>No requests yet. Reload the page to check for new ones.</p>";
+    pending.length ? `You have ${pending.length} swap request(s). Check your Inbox.` : "";
+  document.getElementById("inboxList").innerHTML = pending.length
+    ? pending.map(r => requestCard(r, false)).join("")
+    : `<p>${completed.length ? "You're all caught up. No new requests." : "No requests yet. Reload the page to check for new ones."}</p>`;
+  document.getElementById("doneHeading").hidden = !completed.length;
+  document.getElementById("doneHint").hidden = !completed.length;
+  document.getElementById("doneCount").textContent = completed.length ? `(${completed.length})` : "";
+  document.getElementById("doneList").innerHTML = completed.map(r => requestCard(r, true)).join("");
 }
 
 function requestIntro(index) {
@@ -910,8 +964,9 @@ function showSkillInBrowse(skill) {   // used by the Skill radar
 function connectControls() {
   el.skillFilter.addEventListener("change", renderBrowse);
   el.dayFilter.addEventListener("change", renderBrowse);
-  el.matchBtn.addEventListener("click", renderMatches);
-  el.mutualOnly.addEventListener("change", renderMatches);
+  let hasSearched = false;   // the toggle only re-filters results that "Find matches" already put on screen
+  el.matchBtn.addEventListener("click", () => { hasSearched = true; renderMatches(); });
+  el.mutualOnly.addEventListener("change", () => { if (hasSearched) renderMatches(); });
   el.searchBox.addEventListener("input", renderBrowse);
   window.addEventListener("hashchange", showView);
 

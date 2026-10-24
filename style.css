@@ -62,10 +62,13 @@ nav { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; padding-right: .5rem; }
 body:not(.signed-in) nav { display: none; }   /* the menu only shows once signed in */
 nav a[href="#home"] { display: none; }        /* the logo already goes home (phone tab bar shows it again) */
 nav a { color: var(--cream); text-decoration: none; padding: .2rem 0; border-bottom: 2px solid transparent; }
-nav a:hover { color: #fff7e0; }
+nav a:hover { color: var(--gold); }
 nav a.active { color: #fff7e0; border-bottom-color: var(--cream); }
+#inboxCount { font-size: 0; }   /* hides the plain "(3)" text; the badge below shows the number instead */
+nav a[href="#inbox"] { position: relative; }
+#inboxCount[data-n]:not([data-n=""])::after { content: attr(data-n); position: absolute; top: -.45rem; right: -1rem; min-width: 1.1rem; height: 1.1rem; padding: 0 .3rem; border-radius: 999px; background: #e63946; color: #fff; font-size: .65rem; font-weight: 700; line-height: 1.1rem; text-align: center; }   /* small red badge in the top-right corner of "Inbox" (doesn't widen the underline) */
 nav button { padding: .2rem 0; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--cream); font: inherit; font-weight: 600; cursor: pointer; }
-nav button:hover { color: #fff7e0; }
+nav button:hover { color: var(--gold); }
 nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cream); }
 .pill-left { position: relative; }
 .pill-link { display: inline-flex; align-items: center; height: 2.6rem; padding: 0 .9rem; color: var(--cream); text-decoration: none; font-weight: 600; }
@@ -77,6 +80,7 @@ nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cr
 /* Account button: plain maroon like the pill (only Sign up gets the cream inner button) */
 .account-menu .pill-btn { background: transparent; color: var(--cream); }
 .account-menu .pill-btn:hover, .account-menu .pill-btn[aria-expanded="true"] { background: rgba(241, 232, 210, .14); }
+@media (hover: hover) { .account-menu .pill-btn:hover { color: var(--gold); } }   /* gold text on hover, same as the menu links */
 
 /* Dims the page behind the open dropdown */
 .backdrop { position: fixed; inset: 0; z-index: 4; background: rgba(20, 0, 2, .55); opacity: 0; pointer-events: none; transition: opacity .2s; }
@@ -102,6 +106,9 @@ nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cr
 .pill-btn:hover { background: #fff7e0; }
 .site-header :focus-visible { outline-color: var(--cream); }
 .ico { display: none; }
+.acct-ico { display: none; }
+.dots-btn { display: none; }   /* the ":" menu button only exists on phones */
+#navMoreBtn, .more-panel { display: none; }   /* "More" only exists on phones */
 
 /* ===== App screens (one page at a time) ===== */
 section { max-width: 960px; margin: 0 auto; padding: 2rem 1.2rem 3rem; }
@@ -175,7 +182,9 @@ select, .filters input[type="search"] { padding: .5rem .6rem; font: inherit; col
 .filters label { display: flex; flex-direction: column; gap: .2rem; flex: 1 1 10rem; font-weight: 600; }
 .filters label:first-child { flex: 2 1 14rem; }
 .toggle { display: inline-flex; align-items: center; gap: .4rem; margin-left: 1rem; vertical-align: middle; font-weight: 600; cursor: pointer; }
+.toggle input { accent-color: var(--gold); }   /* tick box uses the gold from the Wants pills instead of browser blue */
 .hint { font-size: .9rem; color: var(--muted); margin: 0; }
+label .hint { font-weight: 400; }   /* the contact format guide sits inside a label */
 [role="status"] { margin: .8rem 0 0; font-weight: 600; color: var(--crimson); }
 [role="status"]:empty { display: none; }
 
@@ -201,6 +210,15 @@ select, .filters input[type="search"] { padding: .5rem .6rem; font: inherit; col
 .req-label { margin-bottom: .25rem; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .req-msg { margin: 0; padding: .6rem .8rem; border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; background: rgba(58, 0, 5, .06); overflow-wrap: anywhere; }
 .req-contact { display: flex; flex-direction: column; padding: .6rem .8rem; border-radius: 10px; background: var(--maroon); color: var(--cream); overflow-wrap: anywhere; }
+.inbox-sub { margin: 2rem 0 .2rem; font-size: 1.4rem; color: var(--maroon-dark); }
+.card.request-card .btn.small { align-self: flex-end; margin: .3rem 0 0; min-height: 2.8rem; padding: .5rem 1.3rem; border: 2px solid var(--maroon-dark); border-radius: 999px; background: var(--gold); color: var(--maroon-dark); font-size: 1rem; box-shadow: 0 3px 0 var(--maroon-dark); cursor: pointer; }   /* bottom-right, gold with a maroon edge so it reads as a button */
+.card.request-card .btn.small:not(.ghost-dark)::before { content: "\2713"; margin-right: .45rem; font-weight: 700; }
+.card.request-card .btn.small:hover { background: #dba93a; }
+.card.request-card .btn.small:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--maroon-dark); }
+.card.request-card .btn.ghost-dark { margin-left: 0; background: transparent; }
+.card.request-card .btn.ghost-dark:hover { background: rgba(58, 0, 5, .1); }
+.card.request-card.is-done { border-color: var(--line); background: rgba(251, 246, 232, .6); }   /* completed requests look quieter */
+.card.request-card.is-done .req-contact { background: var(--muted); }
 .req-contact .req-label { margin-bottom: .1rem; color: rgba(241, 232, 210, .75); }
 .req-contact strong { font-size: 1.05rem; }
 
@@ -284,24 +302,61 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
 
 /* ===== Phone: the menu becomes a bottom tab bar ===== */
 @media (max-width: 700px) {
-  .site-header { padding: .6rem .7rem; }
+  .site-header { padding: calc(.6rem + env(safe-area-inset-top, 0px)) calc(.7rem + env(safe-area-inset-right, 0px)) .6rem calc(.7rem + env(safe-area-inset-left, 0px)); }   /* sits below the iPhone notch / status bar */
   .pill { padding: .35rem .8rem; min-height: 0; }
   .pill-right { gap: 0; padding: .35rem; }
   .pill-btn, .pill-link { height: 2.3rem; }
-  .pill-link { padding: 0 .7rem; }
+  body:not(.signed-in) .pill-right { display: none; }   /* guests: Log in / Sign up move into the ":" menu */
+  body:not(.signed-in) .pill-left { flex: 1; }           /* one wide pill: logo, name and ":" */
+  .dots-btn { display: inline-flex; align-items: center; justify-content: center; margin-left: auto; width: 2.3rem; height: 2.3rem; padding: 0; border: 0; border-radius: 10px; background: rgba(241, 232, 210, .14); color: var(--cream); cursor: pointer; }
+  .dots-btn[aria-expanded="true"] { background: rgba(241, 232, 210, .28); }
+  .dots { width: 4px; height: 4px; border-radius: 50%; background: currentColor; box-shadow: 0 8px 0 currentColor; transform: translateY(-4px); }
+  .guest-menu { left: 0; right: 0; min-width: 0; display: flex; flex-direction: column; gap: .5rem; padding: .5rem; background: var(--maroon-dark); border-radius: 18px; }   /* two stacked full-width buttons */
+  .guest-menu a { display: flex; align-items: center; justify-content: center; height: 3rem; padding: 0 1rem; border-radius: 14px; font-weight: 600; text-align: center; }
+  .guest-menu a[data-auth="signin"] { background: rgba(241, 232, 210, .14); color: var(--cream); }
+  .guest-menu a[data-auth="signup"] { background: var(--cream); color: var(--maroon-dark); }
+  .guest-menu a[data-auth="signin"]:hover { background: rgba(241, 232, 210, .24); }
+  .guest-menu a[data-auth="signup"]:hover { background: #fff7e0; }
+  .pill-link { padding: 0 .55rem; }
+  .pill-btn { padding: 0 .85rem; }
+  .pill-link, .pill-btn, .logo-text { white-space: nowrap; }   /* never wrap onto two lines */
+  .pill { gap: .4rem .6rem; }
+  .pill-left { padding: .35rem .7rem; min-width: 0; }
+  .logo { font-size: 1.2rem; gap: .5rem; }
+  .logo-img { height: 2.1rem; }
+  .pill-link, .pill-btn { font-size: .92rem; }
   .menu { top: calc(100% + .5rem); }
+  .pill-right:has(.account-menu:not([hidden])) { width: 3rem; min-height: 0; padding: 0; justify-content: center; border-radius: 50%; }   /* Account becomes a round icon */
+  .account-menu .pill-btn { width: 2.6rem; height: 2.6rem; padding: 0; border-radius: 50%; }
+  .acct-text, .caret { display: none; }
+  .acct-ico { display: block; width: 1.35rem; height: 1.35rem; }
   body.menu-open nav { opacity: .4; pointer-events: none; }   /* the phone tab bar dims too */
-  nav a[href="#home"] { display: flex; }
-  nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 6; flex-wrap: nowrap; gap: 0; justify-content: space-around; background: var(--maroon-dark); border-top: 2px solid var(--maroon); padding: .35rem 0 calc(.35rem + env(safe-area-inset-bottom, 0px)); }
-  nav a, nav button { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: .65rem; text-align: center; border-bottom: 0; }
+  nav { position: fixed; bottom: calc(.7rem + env(safe-area-inset-bottom, 0px)); left: calc(.9rem + env(safe-area-inset-left, 0px)); right: calc(.9rem + env(safe-area-inset-right, 0px)); z-index: 6; flex-wrap: nowrap; gap: 0; justify-content: space-around; align-items: center; background: var(--maroon-dark); border-radius: 999px; box-shadow: 0 8px 24px rgba(58, 0, 5, .4); padding: .4rem .5rem; }   /* floating pill tab bar */
+  nav a, nav button { position: relative; flex: none; display: flex; align-items: center; justify-content: center; width: 2.9rem; height: 2.9rem; padding: 0; border-radius: 50%; font-size: 0; border-bottom: 0; background: rgba(241, 232, 210, .14); transition: background .15s, color .15s; }   /* icon-only circles (the label text stays for screen readers) */
+  nav a:active, nav button:active { background: rgba(241, 232, 210, .28); }
+  nav a.active, nav button[aria-expanded="true"] { background: var(--gold); }   /* the current page / open menu gets the lit-up circle */
+  #inboxCount[data-n]:not([data-n=""])::after { content: attr(data-n); position: absolute; top: .1rem; right: .1rem; margin-left: 0; min-width: 1.1rem; height: 1.1rem; padding: 0 .25rem; border-radius: 999px; background: #000; color: #fff; font-size: .65rem; font-weight: 700; line-height: 1.1rem; text-align: center; }
   nav a.active, nav button, nav button[aria-expanded="true"] { border-bottom: 0; }
-  .panel { position: fixed; left: .7rem; right: .7rem; top: auto; width: auto; bottom: calc(var(--bottom-bar) + env(safe-area-inset-bottom, 0px) + .6rem); }
-  .ico { display: block; font-size: 1.2rem; line-height: 1.2; }
-  :root { --header-h: 4.2rem; }
-  body.signed-in { padding-bottom: 4.5rem; --bottom-bar: 4.5rem; }
+  .panel, #skillsPanel { position: fixed; left: .9rem; right: .9rem; top: auto; width: auto; bottom: calc(var(--bottom-bar) + env(safe-area-inset-bottom, 0px) + .6rem); }   /* same side margins as the tab bar */
+  #skillsPanel { max-height: calc(100dvh - var(--header-h) - var(--bottom-bar) - env(safe-area-inset-bottom, 0px) - 1.6rem); }
+  dialog {   /* popups sit between the header and the tab bar, so neither is covered */
+    inset-block-start: calc(var(--header-h) + .2rem); inset-block-end: calc(var(--bottom-bar) + env(safe-area-inset-bottom, 0px) + .6rem); margin-block: auto;
+    max-height: calc(100dvh - var(--header-h) - .2rem - var(--bottom-bar) - env(safe-area-inset-bottom, 0px) - .6rem);
+  }
+  .ico { display: block; font-size: 1.45rem; line-height: 1; }
+  .ico img { display: block; width: 1.7rem; height: 1.7rem; object-fit: contain; pointer-events: none; }   /* your own nav icons: change 1.7rem to resize */
+  .logged-in { display: block; }   /* "You're logged in." gets its own line on phones */
+  #navSkillsBtn, #navRequestBtn { display: none; }   /* these two live inside "More" on phones */
+  #navMoreBtn { display: flex; color: #fff; }   /* white "..." */
+  .more-panel:not([hidden]) { display: flex; flex-direction: column; gap: .3rem; }
+  .more-item { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .8rem .9rem; border: 0; border-radius: 10px; background: rgba(58, 0, 5, .07); color: var(--maroon-dark); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+  .more-item:active { background: rgba(58, 0, 5, .16); }
+  :root { --header-h: calc(4.2rem + env(safe-area-inset-top, 0px)); }
+  body.signed-in { padding-bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)); --bottom-bar: 4.4rem; }
 
   section { padding: 1.5rem 1rem 2.5rem; }
   .hero { padding: 4rem 1rem 2.4rem; }
+  .hero h1 { font-size: clamp(3rem, 18vw, 5rem); text-wrap: balance; }   /* big headline on phones: change 18vw to resize */
   .toggle { display: flex; margin: .8rem 0 0; }
   #radarList { grid-template-columns: 7.5rem 1fr; }
   .radar-row .note { grid-column: 1 / -1; }

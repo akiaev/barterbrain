@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Barter Brain - Trade your Brainpower</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Barter Brain - Trade Your Brainpower</title>
 <link rel="icon" href="images/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -15,13 +15,18 @@
     <a class="logo" href="#home"><img class="logo-img" src="images/logo.png" alt=""><span class="logo-text">Barter Brain</span></a>
     <nav>
       <a href="#home"><span class="ico">&#127968;</span>Home</a>
-      <a class="members-only" href="#browse"><span class="ico">&#128269;</span>Browse</a>
-      <a class="members-only" href="#matches"><span class="ico">&#129309;</span>Find Match</a>
-      <a class="members-only" href="#radar"><span class="ico">&#128225;</span>Skill radar</a>
-      <a class="members-only" href="#inbox"><span class="ico">&#128236;</span><span>Inbox<span id="inboxCount"></span></span></a>
+      <a class="members-only" href="#browse"><span class="ico"><img src="images/explore.png" alt=""></span>Browse</a>
+      <a class="members-only" href="#matches"><span class="ico"><img src="images/match.png" alt=""></span>Find Match</a>
+      <a class="members-only" href="#radar"><span class="ico"><img src="images/radar.png" alt=""></span>Skill radar</a>
+      <a class="members-only" href="#inbox"><span class="ico"><img src="images/inbox.png" alt=""></span><span>Inbox<span id="inboxCount"></span></span></a>
       <button class="members-only" type="button" id="navSkillsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="skillsPanel"><span class="ico">&#9999;&#65039;</span>Quick edit</button>
       <button class="members-only" type="button" id="navRequestBtn" aria-haspopup="true" aria-expanded="false" aria-controls="requestPanel"><span class="ico">&#128161;</span>Request</button>
+      <button class="members-only" type="button" id="navMoreBtn" aria-haspopup="true" aria-expanded="false" aria-controls="morePanel"><span class="ico">&#8943;</span>More</button>
     </nav>
+    <div class="panel more-panel" id="morePanel" hidden>
+      <button type="button" class="more-item" data-more="skills"><span aria-hidden="true">&#9999;&#65039;</span> Quick edit</button>
+      <button type="button" class="more-item" data-more="request"><span aria-hidden="true">&#128161;</span> Request a skill</button>
+    </div>
     <div class="panel" id="skillsPanel" hidden>
       <form id="skillsForm">
         <div class="sk-title">Quick edit</div>
@@ -50,12 +55,17 @@
         <p class="hint">Requests are reviewed first. Once approved, the skill appears for everyone.</p>
       </div>
     </div>
+    <button type="button" class="dots-btn guest-only" id="guestMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="guestDropdown" aria-label="Log in or sign up"><span class="dots" aria-hidden="true"></span></button>
+    <div class="menu guest-menu" id="guestDropdown" role="menu" hidden>
+      <a role="menuitem" href="#join" data-auth="signin">Log in</a>
+      <a role="menuitem" href="#join" data-auth="signup">Sign up</a>
+    </div>
   </div>
   <div class="pill pill-right">
     <a class="pill-link guest-only" href="#join" data-auth="signin">Log in</a>
     <a class="pill-btn guest-only" href="#join" data-auth="signup">Sign up</a>
     <div class="account-menu members-only">
-      <button type="button" class="pill-btn" id="accountBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="accountDropdown">Account <span class="caret" aria-hidden="true"></span></button>
+      <button type="button" class="pill-btn" id="accountBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="accountDropdown" aria-label="Account"><span class="acct-text">Account</span> <span class="caret" aria-hidden="true"></span><svg class="acct-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.2" fill="currentColor"/><path d="M3.8 21c.6-4.5 4-7 8.2-7s7.6 2.5 8.2 7z" fill="currentColor"/></svg></button>
       <div class="menu" id="accountDropdown" role="menu" hidden>
         <a role="menuitem" href="#join">Manage account</a>
         <button role="menuitem" type="button" id="menuSignOut">Log out</button>
@@ -69,11 +79,10 @@
   <section id="home" class="view">
     <div class="hero">
       <div class="hero-mark"><img src="images/logo.png" alt=""></div>
-      <h1>Trade your Brainpower</h1>
+      <h1>Trade Your Brainpower</h1>
       <p class="lead">Got skills to share? Ready to learn something new? Swap knowledge with the perfect match</p>
       <p class="stats" id="stats">Loading...</p>
       <a class="btn" id="startBtn" href="#join" data-auth="signup">Start Trading</a>
-      <a class="btn ghost members-only" href="#matches">Find my matches</a>
     </div>
     <div class="steps">
       <h2>How it works</h2>
@@ -118,7 +127,7 @@
                   </label>
                   <label>Password <input name="pin" type="password" required minlength="6" placeholder="6+ characters" autocomplete="new-password"></label>
                 </div>
-                <label>Contact <input name="contact" required maxlength="80" placeholder="Messenger, Instagram or phone number"></label>
+                <label>Contact <input name="contact" required maxlength="80" placeholder="e.g. Instagram: @username"><span class="hint">Format: Instagram: @username, Facebook: @username or Phone: 09123456789</span></label>
                 <button class="btn block" type="button" id="signupNext">Continue</button>
                 <p id="signupMsg1" role="status"></p>
                 <p class="hint center">Your contact is only shared when you send a swap request.</p>
@@ -172,7 +181,7 @@
           <div id="welcome" hidden>
             <div class="auth-head">
               <h2>Welcome, <span id="welcomeName"></span>!</h2>
-              <p>You're logged in. Browse students or find your matches.</p>
+              <p><span class="logged-in">You're logged in.</span> Browse students or find your matches.</p>
             </div>
             <p id="welcomeRequests"></p>
             <div class="welcome-actions">
@@ -194,6 +203,9 @@
     <h2>Inbox</h2>
     <p>Swap requests sent to you. Reach out using the contact they shared.</p>
     <div class="cards" id="inboxList"></div>
+    <h3 class="inbox-sub" id="doneHeading" hidden>Completed <span id="doneCount"></span></h3>
+    <p class="hint" id="doneHint" hidden>Swaps you've marked as done. They don't count toward your notifications.</p>
+    <div class="cards" id="doneList"></div>
   </section>
 
   <section id="browse" class="view members-only">
@@ -231,7 +243,7 @@
     <label>Full name <input name="fullName" required maxlength="40"></label>
     <label>Section <input name="section" required maxlength="20"></label>
     <label>Username <input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_][A-Za-z0-9_.]{2,19}" title="3 to 20 characters: letters, numbers, underscores or dots. It can't start with a dot." autocomplete="off"></label>
-    <label>Contact <input name="contact" required maxlength="80"></label>
+    <label>Contact <input name="contact" required maxlength="80" placeholder="e.g. Instagram: @username"><span class="hint">Format: Instagram: @username, Facebook: @username or Phone: 09123456789</span></label>
     <fieldset><legend>I can teach</legend><div class="chips" id="editTeach"></div></fieldset>
     <fieldset><legend>I want to learn</legend><div class="chips" id="editLearn"></div></fieldset>
                 <div class="skill-request">
@@ -263,7 +275,7 @@
     <label>Message (optional)
       <textarea name="message" maxlength="140" rows="3" placeholder="Hi! When are you free to meet?"></textarea>
     </label>
-    <label>Your contact <input name="contact" required maxlength="80"></label>
+    <label>Your contact <input name="contact" required maxlength="80" placeholder="e.g. Instagram: @username"><span class="hint">Format: Instagram: @username, Facebook: @username or Phone: 09123456789</span></label>
     <p class="hint" id="reqNote"></p>
     <div class="dialog-actions">
       <button class="btn" type="submit">Send request</button>
