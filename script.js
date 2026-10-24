@@ -3,7 +3,7 @@
 // ==========================================================
 // Your links and keys are in config.js. Only the column layout of your Sheet tabs is here.
 // Column numbers in the published MEMBERS tab (0 = first column).
-const COLS = { name: 0, section: 1, teach: 2, learn: 3, days: 4, mode: 5, username: 6, pinHash: 7 };
+const COLS = { name: 0, section: 1, teach: 2, learn: 3, days: 4, mode: 5, username: 6, pinHash: 7, hidden: 11 };   // hidden = column L
 
 // Columns of the Requests tab (column A is the timestamp).
 const REQUEST_COLS = { time: 0, to: 1, from: 2, fromName: 3, skills: 4, message: 5, contact: 6 };
@@ -11,6 +11,7 @@ const REQUEST_COLS = { time: 0, to: 1, from: 2, fromName: 3, skills: 4, message:
 
 // Shared state (DEMO_DATA comes from data.js, which loads first)
 let people = [];       // every student loaded from the Sheet
+function visiblePeople() { return people.filter(p => !p.hidden); }   // people you marked Hidden in the Sheet are left out of the lists
 let allSkills = [];    // every skill name, for the chips and filters
 let lastResults = [];  // the most recent match results
 let requests = [];     // every swap request loaded from the Requests tab
@@ -107,7 +108,8 @@ function rowsToPeople(rows) {
       username: username,
       pinHash: parts[0],
       key: (parts[1] || username).toLowerCase(),
-      emailHash: parts[2] || ""
+      emailHash: parts[2] || "",
+      hidden: /^(yes|y|x|true|hide|hidden|1)$/i.test((r[COLS.hidden] || "").trim())   // column L
     };
     const existing = byKey[person.key];
     if (!existing) {
@@ -119,7 +121,8 @@ function rowsToPeople(rows) {
     } else if (existing.pinHash === person.pinHash) {
       // same account + same password hash = a profile update (maybe a new username). Newest row wins.
       if (person.username !== existing.username && list.some(p => p !== existing && p.username === person.username)) continue;
-      Object.assign(existing, { ...person, key: existing.key, emailHash: person.emailHash || existing.emailHash });
+      Object.assign(existing, { ...person, key: existing.key, emailHash: person.emailHash || existing.emailHash,
+                                hidden: existing.hidden || person.hidden });   // hidden on any of their rows = hidden
     }
     // a row for an existing account with a different password hash is ignored
   }
@@ -195,9 +198,10 @@ function canSwap(a, b) {
 
 function countMutualPairs() {
   let count = 0;
-  for (let i = 0; i < people.length; i++) {
-    for (let j = i + 1; j < people.length; j++) {
-      if (canSwap(people[i], people[j])) count++;
+  const list = visiblePeople();
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      if (canSwap(list[i], list[j])) count++;
     }
   }
   return count;
@@ -205,7 +209,7 @@ function countMutualPairs() {
 
 function renderStats() {
   el.stats.textContent =
-    `${people.length} students, ${allSkills.length} skills, ${countMutualPairs()} possible mutual swaps.`;
+    `${visiblePeople().length} students, ${allSkills.length} skills, ${countMutualPairs()} possible mutual swaps.`;
 }
 
 // ----- Browse section -----
@@ -230,7 +234,7 @@ function renderBrowse() {
   const skill = el.skillFilter.value;
   const days = getChecked("browseDay");
   const query = el.searchBox.value.trim().toLowerCase();
-  const shown = people.filter(person => matchesFilters(person, skill, days, query));
+  const shown = visiblePeople().filter(person => matchesFilters(person, skill, days, query));
 
   el.cards.innerHTML = shown.length
     ? shown.map(personCard).join("")
@@ -273,7 +277,7 @@ function renderMatches() {
     return;
   }
 
-  const found = findMatches(me, people);
+  const found = findMatches(me, visiblePeople());
   const mutualCount = found.filter(result => result.isMutual).length;
   lastResults = el.mutualOnly.checked ? found.filter(result => result.isMutual) : found;   // must be the list on screen (buttons use its index)
 
@@ -296,7 +300,7 @@ function addCount(counts, skill, kind) {
 
 function countSkills() {
   const counts = {};
-  for (const person of people) {
+  for (const person of visiblePeople()) {
     for (const skill of person.learn) addCount(counts, skill, "want");
     for (const skill of person.teach) addCount(counts, skill, "teach");
   }
