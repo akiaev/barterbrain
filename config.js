@@ -43,3 +43,8 @@ const SALT = "markbeaace";   // any random text. Pick one and never change it af
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const SKILLS = ["python", "c++", "html/css", "javascript", "excel", "ms word", "photoshop", "canva", "ui/ux", "video editing",
   "guitar", "piano", "drawing", "math tutoring", "public speaking", "essay writing", "filipino", "japanese", "cooking"];
+
+// ----- Swap request cooldown -----
+// How long someone must wait before sending the SAME person another request, in minutes.
+// 60 = 1 hour. Decimals work (0.5 = 30 seconds). 0 = no cooldown. Handy values: 0.5 to test, 60 normal, 1440 = 1 day.
+const REQUEST_COOLDOWN_MINUTES = 60;

@@ -20,6 +20,8 @@ let pendingRequest = null;  // the match the person is sending a request to
 let currentUser = JSON.parse(localStorage.getItem("bb_user") || "null");  // the signed-in person
 localStorage.removeItem("bb_contact");   // old shared keys (they mixed up accounts on one device)
 localStorage.removeItem("bb_sent");
+document.body.classList.toggle("signed-in", currentUser !== null);   // so a logged-in refresh never flashes the guest home page
+let matchesSearched = false;   // true once "Find matches" was pressed (edits then refresh the results on screen)
 
 // Skill-request settings come from config.js (empty if config.js is an older copy)
 const SKILL_REQ_URL = typeof SKILL_REQUEST_POST_URL === "undefined" ? "" : SKILL_REQUEST_POST_URL;
@@ -42,6 +44,9 @@ const el = {
 // ==========================================================
 // 2. SMALL HELPERS
 // ==========================================================
+function stagger(box) {   // numbers the children so the CSS can fade them in one after another
+  [...box.children].forEach((child, i) => child.style.setProperty("--i", Math.min(i, 12)));
+}
 function esc(text) {            // stops pasted HTML from running on the page
   const div = document.createElement("div");
   div.textContent = text;
@@ -167,19 +172,26 @@ function computeSkills() {   // official list + approved requests + the signed-i
 // ==========================================================
 // 4. MATCHING (the core logic)
 // ==========================================================
+// Skills you BOTH teach, where at least one of you also wants to learn more of it.
+// People know a skill at different levels, so this counts as a mutual swap too.
+function levelSkills(a, b) {
+  return a.teach.filter(s => b.teach.includes(s) && (a.learn.includes(s) || b.learn.includes(s)));
+}
+
 function findMatches(me, everyone) {
   const results = [];
   for (const other of everyone) {
     if (me.username && other.username === me.username) continue;
     const theyCanTeachMe = other.teach.filter(s => me.learn.includes(s));
     const iCanTeachThem = me.teach.filter(s => other.learn.includes(s));
+    const sharedLevels = levelSkills(me, other);
     const sharedDays = other.days.filter(d => me.days.includes(d));
-    if (theyCanTeachMe.length === 0 && iCanTeachThem.length === 0) continue;
+    if (theyCanTeachMe.length === 0 && iCanTeachThem.length === 0 && sharedLevels.length === 0) continue;
 
-    const isMutual = theyCanTeachMe.length > 0 && iCanTeachThem.length > 0;
-    let score = (theyCanTeachMe.length + iCanTeachThem.length) * 2 + sharedDays.length;
+    const isMutual = (theyCanTeachMe.length > 0 && iCanTeachThem.length > 0) || sharedLevels.length > 0;
+    let score = (theyCanTeachMe.length + iCanTeachThem.length + sharedLevels.length) * 2 + sharedDays.length;
     if (isMutual) score += 10;
-    results.push({ person: other, theyCanTeachMe, iCanTeachThem, sharedDays, isMutual, score });
+    results.push({ person: other, theyCanTeachMe, iCanTeachThem, sharedLevels, sharedDays, isMutual, score });
   }
   results.sort((a, b) => b.score - a.score);
   return results;
@@ -193,7 +205,7 @@ function findMatches(me, everyone) {
 function canSwap(a, b) {
   const aTeachesB = a.teach.some(skill => b.learn.includes(skill));
   const bTeachesA = b.teach.some(skill => a.learn.includes(skill));
-  return aTeachesB && bTeachesA;
+  return (aTeachesB && bTeachesA) || levelSkills(a, b).length > 0;
 }
 
 function countMutualPairs() {
@@ -208,8 +220,9 @@ function countMutualPairs() {
 }
 
 function renderStats() {
-  el.stats.textContent =
-    `${visiblePeople().length} students, ${allSkills.length} skills, ${countMutualPairs()} possible mutual swaps.`;
+  const text = `${visiblePeople().length} students, ${allSkills.length} skills, ${countMutualPairs()} possible mutual swaps.`;
+  el.stats.textContent = text;
+  document.getElementById("dashStats").textContent = text;
 }
 
 // ----- Browse section -----
@@ -231,7 +244,7 @@ function matchesFilters(person, skill, days, query) {
   return skillOk && dayOk && queryOk;
 }
 
-function renderBrowse() {
+function renderBrowse(animate) {
   const skill = el.skillFilter.value;
   const days = getChecked("browseDay");
   const query = el.searchBox.value.trim().toLowerCase();
@@ -240,6 +253,8 @@ function renderBrowse() {
   el.cards.innerHTML = shown.length
     ? shown.map(personCard).join("")
     : "<p>No one matches those filters yet. Be the first to join!</p>";
+  el.cards.classList.toggle("no-anim", animate === false);   // typing in the search box shouldn't replay the fade-in
+  stagger(el.cards);
 }
 
 // ----- Find matches section -----
@@ -251,29 +266,46 @@ function daysRow(days) {   // "Shared days" row, used by match cards and inbox c
 }
 
 function matchCard(result, index) {
-  const { person, theyCanTeachMe, iCanTeachThem, sharedDays, isMutual } = result;
+  const { person, theyCanTeachMe, iCanTeachThem, sharedLevels, sharedDays, isMutual } = result;
 
   const badgeText = isMutual ? "Mutual swap!" : "One-way match";
   const row = (title, body) => `<div class="req-row"><div class="req-label">${title}</div>${body}</div>`;
-  const teachMe = theyCanTeachMe.length ? row("They can teach you", chipsHTML(theyCanTeachMe, "")) : "";
-  const teachThem = iCanTeachThem.length ? row("You can teach them", chipsHTML(iCanTeachThem, "want")) : "";
+  // A skill you BOTH teach is shown once, under "Same skill", and left out of the two rows below
+  const onlyTheyTeach = theyCanTeachMe.filter(s => !sharedLevels.includes(s));
+  const onlyYouTeach = iCanTeachThem.filter(s => !sharedLevels.includes(s));
+  const teachMe = onlyTheyTeach.length ? row("They can teach you", chipsHTML(onlyTheyTeach, "")) : "";
+  const teachThem = onlyYouTeach.length ? row("You can teach them", chipsHTML(onlyYouTeach, "want")) : "";
+  const levels = sharedLevels.length ? row("Same skill", chipsHTML(sharedLevels, "")) : "";
 
   return `<article class="card match-card ${isMutual ? "mutual" : ""}">
     <div class="req-head"><h3>${esc(firstName(person.name))}</h3><span class="badge ${isMutual ? "" : "oneway"}">${badgeText}</span></div>
     <div class="req-user">${person.username ? `@${esc(person.username)} | ` : ""}${esc(person.section)}</div>
     ${teachMe}
     ${teachThem}
+    ${levels}
     ${daysRow(sharedDays)}
-    <button class="btn small" type="button" data-index="${index}">${sentTo().includes(person.username) ? "Connect again" : "Connect"}</button>
+    ${connectButton(person, index)}
   </article>`;
 }
 
+function renderMatchProfile() {   // read-only summary of the account's choices (they are changed in Quick edit)
+  const box = document.getElementById("matchProfile");
+  if (!currentUser) { box.innerHTML = ""; return; }
+  const row = (title, list, cls) => `<div class="req-row"><div class="req-label">${title}</div>${
+    list.length ? chipsHTML(list, cls) : `<span class="match-days">none yet</span>`}</div>`;
+  box.innerHTML = row("I can teach", currentUser.teach || [], "")
+    + row("I want to learn", currentUser.learn || [], "want")
+    + row("I am free on", currentUser.days || [], "day")
+    + (currentUser.mode ? row("Mode", [currentUser.mode], "day") : "");
+}
+
 function renderMatches() {
-  const me = { name: "(you)", username: currentUser ? currentUser.username : "",
-               teach: getChecked("teach"), learn: getChecked("learn"), days: getChecked("day") };
+  if (!currentUser) return;
+  const me = { name: "(you)", username: currentUser.username,
+               teach: currentUser.teach || [], learn: currentUser.learn || [], days: currentUser.days || [] };
 
   if (me.teach.length === 0 && me.learn.length === 0) {
-    el.matchMsg.textContent = "Pick at least one skill to teach or learn.";
+    el.matchMsg.textContent = "Add skills to teach or learn with Quick edit first.";
     el.results.innerHTML = "";
     return;
   }
@@ -290,6 +322,7 @@ function renderMatches() {
     el.matchMsg.textContent = "No matches yet. Check the Skill radar to see which skills are needed.";
   }
   el.results.innerHTML = lastResults.map(matchCard).join("");
+  stagger(el.results);
 }
 
 
@@ -332,6 +365,7 @@ function renderRadar() {
   el.radarList.innerHTML = rows.length
     ? rows.map(row => radarRow(row, max)).join("")
     : "<p>No data yet.</p>";
+  stagger(el.radarList);
 }
 
 // ==========================================================
@@ -364,7 +398,10 @@ function updateAuthUI() {
   document.getElementById("authForms").hidden = signedIn;
   document.getElementById("welcome").hidden = !signedIn;
   document.querySelectorAll(".members-only").forEach(item => item.hidden = !signedIn);
-  if (signedIn) document.getElementById("welcomeName").textContent = firstName(currentUser.name);
+  if (signedIn) {
+    document.getElementById("welcomeName").textContent = firstName(currentUser.name);
+    document.getElementById("dashName").textContent = firstName(currentUser.name);
+  }
   const startBtn = document.getElementById("startBtn");   // one hero button: sign-up for guests, matches for members
   startBtn.href = signedIn ? "#matches" : "#join";
   startBtn.textContent = signedIn ? "Find my matches" : "Start Trading";
@@ -373,12 +410,15 @@ function updateAuthUI() {
   allSkills = computeSkills();
   buildAllChips();
   renderInbox();
-  prefillMatches();
+  renderMatchProfile();   // Find my matches shows only the account's own choices
+  if (matchesSearched && signedIn) renderMatches();   // an edit refreshes results that are already on screen
+  else { el.results.innerHTML = ""; el.matchMsg.textContent = ""; lastResults = []; }
   showView();
 }
 
 function signOut() {
   currentUser = null;
+  matchesSearched = false;
   localStorage.removeItem("bb_user");
   updateAuthUI();
 }
@@ -484,6 +524,7 @@ async function handleSignup(event) {
 
     form.reset();
     setSignupStep(1);
+    location.hash = "#home";   // after signing up, go to the dashboard
     updateAuthUI();
     renderStats(); renderBrowse(); renderRadar();
   } catch (error) {
@@ -515,6 +556,7 @@ async function handleSignin(event) {
     localStorage.setItem("bb_user", JSON.stringify(currentUser));
     form.reset();
     msg.textContent = "";
+    location.hash = "#home";   // after logging in, go to the dashboard
     updateAuthUI();
   } catch (error) {
     console.error(error);
@@ -558,11 +600,58 @@ function connectAccounts() {
     more: { button: document.getElementById("navMoreBtn"), panel: document.getElementById("morePanel") },   // phone only
     guest: { button: document.getElementById("guestMenuBtn"), panel: document.getElementById("guestDropdown") }   // phone only: the ":" button for guests
   };
-  const openMenu = which => {   // which = "account", "skills", "request" or null (close everything)
+  // The pop is done here with the Web Animations API (not CSS keyframes), so it always plays when a menu opens or closes.
+  const closing = new Map();   // panels that are animating out (they are hidden when the animation ends)
+  const isOpen = panel => !panel.hidden && !closing.has(panel);
+  const phoneLayout = () => window.matchMedia("(max-width: 700px)").matches;   // phone: menus are bottom sheets
+  const wantsMotion = () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const POP = "cubic-bezier(.22, 1, .36, 1)";   // fast start, soft landing, no overshoot (so the menu never grows past its final size or the page edge)
+  const popFrom = (panel, button) => {   // makes the menu grow out of the button that was clicked (and shrink back into it)
+    const p = panel.getBoundingClientRect(), b = button.getBoundingClientRect();
+    if (!b.width || !p.width) { panel.style.transformOrigin = phoneLayout() ? "50% 100%" : "0 0"; return; }   // button not visible (phone Home): grow from the bottom edge
+    const x = Math.min(Math.max(b.left + b.width / 2 - p.left, 0), p.width);
+    const y = Math.min(Math.max(b.top + b.height / 2 - p.top, -40), p.height + 40);
+    panel.style.transformOrigin = `${x}px ${y}px`;
+  };
+  const setPanel = (panel, open, from) => {   // opening pops the menu out; closing shrinks it back, THEN hides it
+    if (open) {
+      if (isOpen(panel)) return;   // already open
+      const running = closing.get(panel);
+      if (running) { closing.delete(panel); running.cancel(); }
+      panel.style.pointerEvents = "";
+      panel.hidden = false;
+      if (from) popFrom(panel, from);
+      if (!wantsMotion()) return;
+      panel.animate(
+        [{ opacity: 0, transform: phoneLayout() ? "translateY(14px) scale(.88)" : "scale(.7)" }, { opacity: 1, transform: "none" }],
+        { duration: 400, easing: POP });
+      panel.querySelectorAll(":scope > form > *, :scope > .skill-request > *, :scope > .more-item").forEach((item, i) =>   // contents fade up one after another
+        item.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }],
+          { duration: 450, delay: 100 + Math.min(i, 8) * 50, easing: "cubic-bezier(.2, .8, .2, 1)", fill: "backwards" }));
+      return;
+    }
+    if (panel.hidden || closing.has(panel)) return;
+    if (!wantsMotion()) { panel.hidden = true; return; }
+    panel.style.pointerEvents = "none";
+    const out = panel.animate(
+      [{ opacity: 1, transform: "none" }, { opacity: 0, transform: phoneLayout() ? "translateY(10px) scale(.9)" : "scale(.8)" }],
+      { duration: 180, easing: "ease-in", fill: "forwards" });
+    closing.set(panel, out);
+    out.onfinish = () => {
+      if (closing.get(panel) !== out) return;   // it was reopened meanwhile
+      closing.delete(panel);
+      panel.hidden = true;
+      panel.style.pointerEvents = "";
+      out.cancel();
+    };
+  };
+  const openMenu = (which, trigger) => {   // trigger = the button that was clicked (the menu pops out of it)   // which = "account", "skills", "request" or null (close everything)
     for (const [name, menu] of Object.entries(menus)) {
-      menu.panel.hidden = name !== which;
+      setPanel(menu.panel, name === which, trigger || menu.button);
       menu.button.setAttribute("aria-expanded", String(name === which));
     }
+    document.querySelectorAll("[data-dash]").forEach(button =>   // the dashboard circle stays lit while its panel is open
+      button.setAttribute("aria-expanded", String(button.dataset.dash === which)));
     backdrop.classList.toggle("open", Boolean(which));
     document.body.classList.toggle("menu-open", Boolean(which));
     if (which === "skills") fillQuickSkills();   // tick what the person currently has
@@ -570,11 +659,17 @@ function connectAccounts() {
   };
   window.closeMenus = () => openMenu(null);   // lets other functions (like saveSkills) close the dropdown
   for (const [name, menu] of Object.entries(menus)) {
-    menu.button.addEventListener("click", () => openMenu(menu.panel.hidden ? name : null));
+    menu.button.addEventListener("click", () => openMenu(isOpen(menu.panel) ? null : name, menu.button));
   }
   document.addEventListener("click", event => {
-    if (!event.target.closest("#accountBtn, #accountDropdown, #navSkillsBtn, #skillsPanel, #navRequestBtn, #requestPanel, #navMoreBtn, #morePanel, #guestMenuBtn, #guestDropdown")) openMenu(null);
+    if (!event.target.closest("#accountBtn, #accountDropdown, #navSkillsBtn, #skillsPanel, #navRequestBtn, #requestPanel, #navMoreBtn, #morePanel, #guestMenuBtn, #guestDropdown, .dash-action, [data-open-menu]")) openMenu(null);
   });
+  // Dashboard Quick Edit / Request circles, and the "Open Quick edit" link on Find my matches
+  document.querySelectorAll("[data-dash], [data-open-menu]").forEach(button =>
+    button.addEventListener("click", () => {
+      const which = button.dataset.dash || button.dataset.openMenu;
+      openMenu(isOpen(menus[which].panel) ? null : which, button);
+    }));
   // Phone "More" sheet: its items open the Quick edit / Request panels
   document.querySelectorAll("[data-more]").forEach(item =>
     item.addEventListener("click", () => openMenu(item.dataset.more)));
@@ -593,7 +688,42 @@ function connectAccounts() {
 // ==========================================================
 // 7. SWAP REQUESTS (popup and inbox)
 // ==========================================================
-function sentTo() { return JSON.parse(localStorage.getItem(sentKey()) || "[]"); }  // usernames you already requested
+// ----- Cooldown: you can only send the same person one request every so often -----
+// Set it in config.js with  const REQUEST_COOLDOWN_MINUTES = 60;  (decimals work: 0.5 = 30 seconds, 0 = no cooldown)
+const COOLDOWN_MINUTES = typeof REQUEST_COOLDOWN_MINUTES === "number" ? REQUEST_COOLDOWN_MINUTES : 60;
+
+function sentLog() {   // { username: the time you last sent them a request }
+  let log = {};
+  try { log = JSON.parse(localStorage.getItem(sentKey()) || "{}"); } catch (error) { log = {}; }
+  if (Array.isArray(log)) log = Object.fromEntries(log.map(name => [name, 0]));   // older versions saved a plain list
+  return log;
+}
+function sentTo() { return Object.keys(sentLog()); }   // usernames you already requested
+
+function cooldownLeft(username) {   // milliseconds until you can request them again (0 = you can now)
+  const last = sentLog()[username] || 0;
+  return Math.max(0, last + COOLDOWN_MINUTES * 60000 - Date.now());
+}
+function waitText(ms) {   // "40s", "45m" or "1h 20m"
+  const seconds = Math.ceil(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.ceil(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60), rest = minutes % 60;
+  return rest ? `${hours}h ${rest}m` : `${hours}h`;
+}
+function stampMs(text) {   // "10/24/2026 14:03:22" from the Sheet -> milliseconds (month/day/year; swaps if the first number is over 12)
+  const m = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!m) return NaN;
+  const [a, b, year, hh, mm, ss] = m.slice(1).map(v => (v === undefined ? 0 : Number(v)));
+  const month = a > 12 ? b : a, day = a > 12 ? a : b;
+  return new Date(year, month - 1, day, hh, mm, ss).getTime();
+}
+function connectButton(person, index) {
+  const wait = person.username ? cooldownLeft(person.username) : 0;
+  if (wait) return `<button class="btn small" type="button" disabled>Request sent | try again in ${waitText(wait)}</button>`;
+  return `<button class="btn small" type="button" data-index="${index}">${sentTo().includes(person.username) ? "Connect again" : "Connect"}</button>`;
+}
 
 async function loadRequests() {
   if (!REQUESTS_CSV_URL) return [];
@@ -604,6 +734,7 @@ async function loadRequests() {
     if (!response.ok || text.trim().startsWith("<")) throw new Error("The link did not return CSV data");
     return parseCSV(text).slice(1).filter(r => r[REQUEST_COLS.to]).map(r => ({
       id: [(r[REQUEST_COLS.time] || "").trim(), (r[REQUEST_COLS.from] || "").trim(), r[REQUEST_COLS.to].trim().toLowerCase()].join("|"),   // identifies a request so it can be marked completed
+      when: stampMs((r[REQUEST_COLS.time] || "").trim()),   // exact send time, used by the cooldown
       time: (r[REQUEST_COLS.time] || "").trim().split(" ")[0],
       to: r[REQUEST_COLS.to].trim().toLowerCase(),
       from: (r[REQUEST_COLS.from] || "").trim(),
@@ -618,13 +749,16 @@ async function loadRequests() {
   }
 }
 
-function requestSkills(text) {   // turns "Can teach you: A. Wants to learn: B" into labelled rows of chips
+const KEY_OF_LABEL = Object.fromEntries(Object.entries(SKILL_LABELS).map(([key, text]) => [text.toLowerCase(), key]));   // "MS Excel" -> "excel"
+
+function requestSkills(text) {   // turns "Can teach you: A. Wants to learn: B. Same skill: C" into labelled rows of chips
   if (!text) return "";
-  const teach = (text.match(/Can teach you:\s*(.*?)(?:\.\s*Wants to learn:|$)/i) || [])[1];
-  const learn = (text.match(/Wants to learn:\s*(.*)$/i) || [])[1];
+  const grab = name => (text.match(new RegExp(name + ":\\s*(.*?)(?=\\.\\s*(?:Can teach you|Wants to learn|Same skill):|$)", "i")) || [])[1];
   const row = (title, list, cls) => list
-    ? `<div class="req-row"><div class="req-label">${title}</div>${chipsHTML(toList(list), cls)}</div>` : "";
-  return row("Can teach you", teach, "") + row("Wants to learn from you", learn, "want")
+    ? `<div class="req-row"><div class="req-label">${title}</div>${chipsHTML(toList(list).map(s => KEY_OF_LABEL[s] || s), cls)}</div>` : "";
+  return row("Can teach you", grab("Can teach you"), "")
+    + row("Wants to learn from you", grab("Wants to learn"), "want")
+    + row("Same skill", grab("Same skill"), "")
     || `<div class="req-row">${esc(text)}</div>`;
 }
 
@@ -657,7 +791,15 @@ function requestCard(r, isDone) {
 }
 
 function renderInbox() {
-  const mine = currentUser ? requests.filter(r => r.to === currentUser.username || r.to === (currentUser.key || currentUser.username)).reverse() : [];  // newest first
+  // Protects against spam: a request sent too soon after the same person's last one (inside the cooldown) is hidden
+  const lastKept = {};   // sender -> time of the last request we showed from them
+  const mine = currentUser ? requests.filter(r => r.to === currentUser.username || r.to === (currentUser.key || currentUser.username)).filter(r => {
+    if (!Number.isFinite(r.when)) return true;
+    const last = lastKept[r.from];
+    if (last !== undefined && r.when - last < COOLDOWN_MINUTES * 60000) return false;
+    lastKept[r.from] = r.when;
+    return true;
+  }).reverse() : [];   // newest first
   const finished = doneIds();
   const pending = mine.filter(r => !finished.includes(r.id));
   const completed = mine.filter(r => finished.includes(r.id));
@@ -673,6 +815,17 @@ function renderInbox() {
   document.getElementById("doneHint").hidden = !completed.length;
   document.getElementById("doneCount").textContent = completed.length ? `(${completed.length})` : "";
   document.getElementById("doneList").innerHTML = completed.map(r => requestCard(r, true)).join("");
+  stagger(document.getElementById("inboxList")); stagger(document.getElementById("doneList"));
+  const dashBadge = document.getElementById("dashInboxBadge");   // number on the dashboard's Inbox circle
+  dashBadge.textContent = pending.length || "";
+  dashBadge.hidden = !pending.length;
+}
+
+function requestSplit(result) {   // a skill you BOTH teach is shown once, under "Same skill"
+  const shared = result.sharedLevels;
+  return { shared,
+           onlyThey: result.theyCanTeachMe.filter(s => !shared.includes(s)),
+           onlyYou: result.iCanTeachThem.filter(s => !shared.includes(s)) };
 }
 
 function requestIntro(index) {
@@ -682,14 +835,21 @@ function requestIntro(index) {
     alert("This is a sample profile, so it can't receive requests.");
     return;
   }
+  const wait = cooldownLeft(person.username);
+  if (wait) {
+    alert(`You already sent ${firstName(person.name)} a request. You can send another in ${waitText(wait)}.`);
+    return;
+  }
   pendingRequest = result;
-  const parts = [];
-  if (result.theyCanTeachMe.length) parts.push(`${firstName(person.name)} can teach you ${result.theyCanTeachMe.map(label).join(", ")}`);
-  if (result.iCanTeachThem.length) parts.push(`you can teach ${firstName(person.name)} ${result.iCanTeachThem.map(label).join(", ")}`);
+  const { onlyThey, onlyYou, shared } = requestSplit(result);
+  const row = (title, list, cls) => list.length
+    ? `<div class="req-row"><div class="req-label">${title}</div>${chipsHTML(list, cls)}</div>` : "";
 
   const form = document.getElementById("requestForm");
   document.getElementById("reqName").textContent = firstName(person.name);
-  document.getElementById("reqSummary").textContent = parts.join(", and ") + ".";
+  document.getElementById("reqSummary").innerHTML =
+    row("They can teach you", onlyThey, "") + row("You can teach them", onlyYou, "want") + row("Same skill", shared, "")
+    + daysRow(result.sharedDays);
   const again = sentTo().includes(person.username) ? `You already sent ${firstName(person.name)} a request. This will send another. ` : "";
   document.getElementById("reqNote").textContent = again + `${firstName(person.name)} will see your contact so you can connect.`;
   document.getElementById("reqStatus").textContent = "";
@@ -704,14 +864,22 @@ async function sendRequest(event) {
   const status = document.getElementById("reqStatus");
   const target = pendingRequest.person;
 
+  const wait = cooldownLeft(target.username);   // checked again here in case the popup was left open
+  if (wait) {
+    status.textContent = `You already sent ${firstName(target.name)} a request. You can send another in ${waitText(wait)}.`;
+    return;
+  }
+
   if (REQUEST_POST_URL.includes("YOUR_FORM_ID")) {
     status.textContent = "Swap requests aren't connected yet. Add your Form link in script.js.";
     return;
   }
 
+  const { onlyThey, onlyYou, shared } = requestSplit(pendingRequest);
   const parts = [];
-  if (pendingRequest.iCanTeachThem.length) parts.push("Can teach you: " + pendingRequest.iCanTeachThem.map(label).join(", "));
-  if (pendingRequest.theyCanTeachMe.length) parts.push("Wants to learn: " + pendingRequest.theyCanTeachMe.map(label).join(", "));
+  if (onlyYou.length) parts.push("Can teach you: " + onlyYou.map(label).join(", "));
+  if (onlyThey.length) parts.push("Wants to learn: " + onlyThey.map(label).join(", "));
+  if (shared.length) parts.push("Same skill: " + shared.map(label).join(", "));
   const contact = form.contact.value.trim();
 
   const data = new URLSearchParams();
@@ -728,7 +896,9 @@ async function sendRequest(event) {
   try {
     await fetch(REQUEST_POST_URL, { method: "POST", mode: "no-cors", body: data });
     setContact(contact);
-    localStorage.setItem(sentKey(), JSON.stringify([...new Set(sentTo().concat(target.username))]));
+    const log = sentLog();
+    log[target.username] = Date.now();   // starts the cooldown for this person
+    localStorage.setItem(sentKey(), JSON.stringify(log));
     document.getElementById("requestDialog").close();
     renderMatches();   // refresh the cards so this one shows "Request sent"
     el.matchMsg.textContent = `Request sent to ${firstName(target.name)}!`;
@@ -746,13 +916,6 @@ function setChecked(group, values) {
   document.querySelectorAll(`input[name="${group}"]`).forEach(box => {
     box.checked = values.includes(box.value);
   });
-}
-
-function prefillMatches() {   // ticks the person's own choices in Find Match; they can still change them
-  if (!currentUser) return;
-  setChecked("teach", currentUser.teach || []);
-  setChecked("learn", currentUser.learn || []);
-  setChecked("day", currentUser.days || []);
 }
 
 function openEditProfile() {
@@ -930,7 +1093,7 @@ function fillSelect(select, items, allText) {
 const CHIP_GROUPS = [   // [box id, group name, "skills" or "days"]
   ["joinTeach", "joinTeach", "skills"], ["joinLearn", "joinLearn", "skills"], ["joinDays", "joinDays", "days"],
   ["editTeach", "editTeach", "skills"], ["editLearn", "editLearn", "skills"], ["editDays", "editDays", "days"],
-  ["teachChips", "teach", "skills"], ["learnChips", "learn", "skills"], ["dayChips", "day", "days"], ["browseDays", "browseDay", "days"],
+  ["browseDays", "browseDay", "days"],
   ["quickTeach", "quickTeach", "skills"], ["quickLearn", "quickLearn", "skills"], ["quickDays", "quickDays", "days"]
 ];
 
@@ -1000,10 +1163,10 @@ function showSkillInBrowse(skill) {   // used by the Skill radar
 function connectControls() {
   el.skillFilter.addEventListener("change", renderBrowse);
   document.getElementById("browseDays").addEventListener("change", renderBrowse);
-  let hasSearched = false;   // the toggle only re-filters results that "Find matches" already put on screen
-  el.matchBtn.addEventListener("click", () => { hasSearched = true; renderMatches(); });
-  el.mutualOnly.addEventListener("change", () => { if (hasSearched) renderMatches(); });
-  el.searchBox.addEventListener("input", renderBrowse);
+  // the toggle only re-filters results that "Find matches" already put on screen
+  el.matchBtn.addEventListener("click", () => { matchesSearched = true; renderMatches(); });
+  el.mutualOnly.addEventListener("change", () => { if (matchesSearched) renderMatches(); });
+  el.searchBox.addEventListener("input", () => renderBrowse(false));
   window.addEventListener("hashchange", showView);
 
   el.radarList.addEventListener("click", event => {
@@ -1024,6 +1187,68 @@ function connectControls() {
     const button = event.target.closest("button[data-index]");
     if (button) requestIntro(Number(button.dataset.index));
   });
+}
+
+// ----- Phone keyboard: whatever the person is typing in always stays visible -----
+const TEXT_FIELD = "input:not([type=radio]):not([type=checkbox]):not([type=submit]):not([type=button]), textarea";
+
+function scrollParentOf(node) {   // the popup / menu / page area that scrolls, if the field lives inside one
+  for (let p = node.parentElement; p; p = p.parentElement) {
+    const overflow = getComputedStyle(p).overflowY;
+    if ((overflow === "auto" || overflow === "scroll") && p.scrollHeight > p.clientHeight) return p;
+  }
+  return null;
+}
+
+function keepFieldVisible() {   // scrolls the field you're typing in into the part of the screen the keyboard doesn't cover
+  const field = document.activeElement;
+  if (!field || !field.matches(TEXT_FIELD)) return;
+  const vv = window.visualViewport;
+  const top = vv ? vv.offsetTop : 0, height = vv ? vv.height : window.innerHeight;
+  const inBox = field.closest("dialog, .panel");   // popups and menus have their own top edge; the page has the sticky header
+  const header = inBox ? 8 : document.querySelector(".site-header").offsetHeight + 8;
+  const visibleTop = top + header, visibleBottom = top + height - 16;
+  const r = field.getBoundingClientRect();
+  if (r.top >= visibleTop && r.bottom <= visibleBottom) return;   // already visible
+  const delta = r.top - (visibleTop + (visibleBottom - visibleTop - r.height) / 2);   // centre it in the visible part
+  const scroller = scrollParentOf(field);
+  if (scroller) scroller.scrollBy({ top: delta, behavior: "smooth" });   // scroll inside the popup / menu
+  else if (!inBox) window.scrollBy({ top: delta, behavior: "smooth" });  // only a field on the page itself may scroll the page
+}
+
+function trackKeyboard() {   // measures the on-screen keyboard (phones) so sheets, popups and the page can make room for it
+  let timer;
+  const later = ms => { clearTimeout(timer); timer = setTimeout(keepFieldVisible, ms); };
+  document.addEventListener("focusin", event => { if (event.target.matches(TEXT_FIELD)) later(350); });   // after the keyboard has slid up
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const update = () => {
+    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    const open = kb > 120 && document.activeElement.matches(TEXT_FIELD);   // small changes are just the browser's address bar; no field focused = no keyboard
+    document.documentElement.style.setProperty("--kb", open ? kb + "px" : "0px");
+    document.body.classList.toggle("keyboard-open", open);
+    if (open) later(120);
+  };
+  vv.addEventListener("resize", update);
+  vv.addEventListener("scroll", update);
+  update();
+}
+
+// While a popup (Edit profile, Request a swap) or a dropdown (Quick edit, Request a skill, Account...) is open,
+// the page behind it can't scroll. Only the popup itself scrolls.
+function setupScrollLock() {
+  const root = document.documentElement;
+  const sync = () => {
+    const shouldLock = Boolean(document.querySelector("dialog[open]")) || document.body.classList.contains("menu-open");
+    if (shouldLock === root.classList.contains("scroll-locked")) return;
+    // remember the scrollbar's width so the page doesn't jump sideways when the scrollbar disappears
+    if (shouldLock) root.style.setProperty("--scrollbar-w", (window.innerWidth - root.clientWidth) + "px");
+    root.classList.toggle("scroll-locked", shouldLock);
+  };
+  const watcher = new MutationObserver(sync);
+  document.querySelectorAll("dialog").forEach(dialog => watcher.observe(dialog, { attributes: true, attributeFilter: ["open"] }));
+  watcher.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  sync();
 }
 
 async function init() {
@@ -1051,6 +1276,8 @@ async function init() {
 
   connectControls();
   connectAccounts();
+  trackKeyboard();
+  setupScrollLock();
   updateAuthUI();
   renderStats();
   renderBrowse();
@@ -1072,6 +1299,7 @@ function showView() {
   document.querySelectorAll("nav a").forEach(link => link.classList.toggle("active", link.getAttribute("href") === "#" + name));
   if (name !== currentView) window.scrollTo(0, 0);
   currentView = name;
+  document.body.classList.toggle("on-home", name === "home");   // phone: the dashboard replaces the bottom tab bar on Home
 }
 
 init();

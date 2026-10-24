@@ -77,14 +77,30 @@
 
 <main>
   <section id="home" class="view">
-    <div class="hero">
+    <div class="dashboard members-only" id="dashboard" hidden>
+      <div class="hero dash-hero">
+        <div class="hero-mark"><img src="images/logo.png" alt=""></div>
+        <h1>Trade Your Brainpower</h1>
+        <p class="lead dash-welcome">Welcome back, <span id="dashName"></span>!</p>
+        <p class="stats" id="dashStats">Loading...</p>
+      </div>
+      <div class="dash-grid" role="navigation" aria-label="Dashboard">
+        <a class="dash-item" style="--n:0" href="#browse"><span class="dash-circle"><img src="images/explore.png" alt=""></span><span class="dash-label">Browse</span></a>
+        <a class="dash-item" style="--n:1" href="#matches"><span class="dash-circle"><img src="images/match.png" alt=""></span><span class="dash-label">Match</span></a>
+        <a class="dash-item" style="--n:2" href="#radar"><span class="dash-circle"><img src="images/radar.png" alt=""></span><span class="dash-label">Skills Radar</span></a>
+        <a class="dash-item" style="--n:3" href="#inbox"><span class="dash-circle"><img src="images/inbox.png" alt=""><span class="dash-badge" id="dashInboxBadge" hidden></span></span><span class="dash-label">Inbox</span></a>
+        <button class="dash-item dash-action" style="--n:4" type="button" data-dash="skills"><span class="dash-circle"><span class="dash-emoji" aria-hidden="true">&#9999;&#65039;</span></span><span class="dash-label">Quick Edit</span></button>
+        <button class="dash-item dash-action" style="--n:5" type="button" data-dash="request"><span class="dash-circle"><span class="dash-emoji" aria-hidden="true">&#128161;</span></span><span class="dash-label">Request</span></button>
+      </div>
+    </div>
+    <div class="hero guest-only guest-home">
       <div class="hero-mark"><img src="images/logo.png" alt=""></div>
       <h1>Trade Your Brainpower</h1>
       <p class="lead">Got skills to share? Ready to learn something new? Swap knowledge with the perfect match</p>
       <p class="stats" id="stats">Loading...</p>
       <a class="btn" id="startBtn" href="#join" data-auth="signup">Start Trading</a>
     </div>
-    <div class="steps">
+    <div class="steps guest-only guest-home">
       <h2>How it works</h2>
       <ol class="steps-row">
         <li><span class="step-num">1</span><h3>Create your account</h3><p>Use your school email. Pick what you can teach and what you want to learn.</p></li>
@@ -100,7 +116,7 @@
         <li>Beatrixe Angelica De Ramos</li>
         <li>Mark Aaron Herrero</li>
       </ul>
-      <p class="footer-copy">Copyright &copy; 2026 Barter Brain.<br>All rights reserved.</p>
+      <p class="footer-copy">Copyright &copy; 2026 Barter Brain.<br> All rights reserved.</p>
     </footer>
   </section>
 
@@ -137,7 +153,7 @@
                   </label>
                   <label>Password <input name="pin" type="password" required minlength="6" placeholder="6+ characters" autocomplete="new-password"></label>
                 </div>
-                <label>Contact <input name="contact" required maxlength="80" placeholder="e.g. Instagram: @username"><span class="hint">Format: Instagram: @username, Facebook: @username or Phone: 09123456789. Only share what you're comfortable with.</span></label>
+                <label>Contact <input name="contact" required maxlength="80" placeholder="e.g. Instagram: @username"><span class="hint contact-hint"><span><strong>Format:</strong> <span class="nb">Instagram: @username</span>, <span class="nb">Facebook: @username</span>, <span class="nb">or Phone: 09123456789</span></span><span>Only share what you're comfortable with.</span></span></label>
                 <button class="btn block" type="button" id="signupNext">Continue</button>
                 <p id="signupMsg1" role="status"></p>
                 <p class="hint center">Your contact is only shared when you send a swap request.</p>
@@ -230,10 +246,9 @@
 
   <section id="matches" class="view members-only">
     <h2>Find my matches</h2>
-    <p>Nothing is submitted here. Pick your skills and see who fits.</p>
-    <fieldset><legend>I can teach</legend><div class="chips" id="teachChips"></div></fieldset>
-    <fieldset><legend>I want to learn</legend><div class="chips" id="learnChips"></div></fieldset>
-    <fieldset><legend>I am free on</legend><div class="chips" id="dayChips"></div></fieldset>
+    <p>We match you using the profile below. To change it, use Quick edit.</p>
+    <div class="match-profile" id="matchProfile"></div>
+    <p class="hint match-edit-hint">Something look off? <button type="button" class="link-btn" data-open-menu="skills">Open Quick edit</button></p>
     <button class="btn" id="matchBtn" type="button">Find matches</button>
     <label class="toggle"><input type="checkbox" id="mutualOnly"> Mutual swaps only</label>
     <p id="matchMsg" role="status"></p>
@@ -254,7 +269,7 @@
     <label>Full name <input name="fullName" required maxlength="40"></label>
     <label>Section <input name="section" required maxlength="20"></label>
     <label>Username <input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_][A-Za-z0-9_.]{2,19}" title="3 to 20 characters: letters, numbers, underscores or dots. It can't start with a dot." autocomplete="off"></label>
-    <label>Contact <input name="contact" required maxlength="80" placeholder="e.g. Instagram: @username"><span class="hint">Format: Instagram: @username, Facebook: @username or Phone: 09123456789. Only share what you're comfortable with.</span></label>
+    <label>Contact <input name="contact" required maxlength="80" placeholder="e.g. Instagram: @username"><span class="hint contact-hint"><span><strong>Format:</strong> <span class="nb">Instagram: @username</span>, <span class="nb">Facebook: @username</span>, <span class="nb">or Phone: 09123456789</span></span><span>Only share what you're comfortable with.</span></span></label>
     <fieldset><legend>I can teach</legend><div class="chips" id="editTeach"></div></fieldset>
     <fieldset><legend>I want to learn</legend><div class="chips" id="editLearn"></div></fieldset>
                 <div class="skill-request">
@@ -282,11 +297,11 @@
 <dialog id="requestDialog">
   <form id="requestForm">
     <h3>Request a swap with <span id="reqName"></span></h3>
-    <p id="reqSummary"></p>
+    <div class="req-summary" id="reqSummary"></div>
     <label>Message (optional)
       <textarea name="message" maxlength="140" rows="3" placeholder="Hi! When are you free to meet?"></textarea>
     </label>
-    <label>Your contact <input name="contact" required maxlength="80" placeholder="e.g. Instagram: @username"><span class="hint">Format: Instagram: @username, Facebook: @username or Phone: 09123456789. Only share what you're comfortable with.</span></label>
+    <label>Your contact <input name="contact" required maxlength="80" placeholder="e.g. Instagram: @username"><span class="hint contact-hint"><span><strong>Format:</strong> <span class="nb">Instagram: @username</span>, <span class="nb">Facebook: @username</span>, <span class="nb">or Phone: 09123456789</span></span><span>Only share what you're comfortable with.</span></span></label>
     <p class="hint" id="reqNote"></p>
     <div class="dialog-actions">
       <button class="btn" type="submit">Send request</button>

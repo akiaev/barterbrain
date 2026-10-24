@@ -15,6 +15,7 @@
   --maroon-hover: #5a0a14;
   --header-h: 5rem;      /* height of the floating header: used to make the account screens fit exactly */
   --bottom-bar: 0rem;    /* phone tab bar height (only when logged in) */
+  --page-bottom: 0rem;   /* all the space the phone page reserves under its content (tab bar + gap) */
   --cream: #f1e8d2;
   --paper: #fbf6e8;
   --gold: #c9962f;
@@ -81,11 +82,11 @@ nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cr
 @media (hover: hover) { .account-menu .pill-btn:hover { color: var(--gold); } }   /* gold text on hover, same as the menu links */
 
 /* Dims the page behind the open dropdown */
-.backdrop { position: fixed; inset: 0; z-index: 4; background: rgba(20, 0, 2, .55); opacity: 0; pointer-events: none; transition: opacity .2s; }
+.backdrop { position: fixed; inset: 0; z-index: 4; background: rgba(20, 0, 2, .55); opacity: 0; pointer-events: none; transition: opacity .3s ease; }
 .backdrop.open { opacity: 1; pointer-events: auto; }
 
 /* Request-a-skill dropdown (under the top-left menu) */
-.panel { position: absolute; left: 0; top: calc(100% + .6rem); width: min(22rem, calc(100vw - 2.4rem)); padding: 1rem; background: var(--cream); color: var(--ink); border-radius: 14px; box-shadow: 0 10px 28px rgba(58, 0, 5, .35); animation: viewIn .15s ease-out; }
+.panel { position: absolute; left: 0; top: calc(100% + .6rem); width: min(22rem, calc(100vw - 2.4rem)); padding: 1rem; background: var(--cream); color: var(--ink); border-radius: 14px; box-shadow: 0 10px 28px rgba(58, 0, 5, .35); }
 .panel .sk-title { color: var(--maroon-dark); }
 .panel input[type="text"] { padding: .6rem .8rem; font: inherit; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
 .panel input[type="text"]:focus { border-color: var(--maroon); outline: none; }
@@ -97,7 +98,7 @@ nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cr
 
 /* Account dropdown */
 .account-menu { position: static; }
-.menu { position: absolute; right: 0; top: calc(100% + .6rem); min-width: 12rem; padding: .4rem; background: var(--cream); border-radius: 14px; box-shadow: 0 10px 28px rgba(58, 0, 5, .35); animation: viewIn .15s ease-out; }
+.menu { position: absolute; right: 0; top: calc(100% + .6rem); min-width: 12rem; padding: .4rem; background: var(--cream); border-radius: 14px; box-shadow: 0 10px 28px rgba(58, 0, 5, .35); }
 .menu a, .menu button { display: block; width: 100%; padding: .65rem .8rem; border: 0; border-radius: 9px; background: none; color: var(--maroon-dark); font: inherit; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
 .menu a:hover, .menu button:hover { background: rgba(58, 0, 5, .09); }
 .menu button { margin-top: .15rem; border-top: 1px solid rgba(58, 0, 5, .16); border-radius: 0 0 9px 9px; }
@@ -111,7 +112,7 @@ nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cr
 /* ===== App screens (one page at a time) ===== */
 section { max-width: 960px; margin: 0 auto; padding: 2rem 1.2rem 3rem; }
 .view { display: none; }
-.view.active { display: block; animation: viewIn .2s ease-out; }
+.view.active { display: block; animation: viewIn .3s cubic-bezier(.2, .8, .2, 1); }
 @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .view.active { animation: none; } }
 #home { max-width: none; padding: 0; }
@@ -152,12 +153,12 @@ h2 { font-size: 2rem; margin: 0; color: var(--maroon); line-height: 1.2; }
 .btn {
   display: inline-block; vertical-align: middle; padding: .65rem 1.4rem; border: 2px solid var(--maroon); border-radius: 8px;
   background: var(--maroon); color: var(--cream); font-size: 1rem; line-height: 1.2; text-decoration: none; cursor: pointer;
-  transition: background .15s;
+  transition: background .15s, border-color .15s, color .15s, transform .15s, box-shadow .15s;
 }
-.btn:hover { background: var(--maroon-hover); border-color: var(--maroon-hover); }
+.btn:hover { background: var(--maroon-hover); border-color: var(--maroon-hover); transform: translateY(-1px); }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: .6; cursor: not-allowed; }
-.btn:disabled:hover { background: var(--maroon); border-color: var(--maroon); }
+.btn:disabled:hover { background: var(--maroon); border-color: var(--maroon); transform: none; }
 .btn.small { padding: .35rem .9rem; font-size: .9rem; margin-top: .6rem; }
 .btn.ghost-dark { background: transparent; color: var(--maroon); margin-left: .5rem; }
 .btn.ghost-dark:hover { background: rgba(58, 0, 5, .1); border-color: var(--maroon); }
@@ -167,7 +168,7 @@ h2 { font-size: 2rem; margin: 0; color: var(--maroon); line-height: 1.2; }
 .chip.want { background: var(--gold); color: var(--ink); }
 .chips { display: flex; flex-wrap: wrap; gap: .45rem; }
 .chip-check input { position: absolute; opacity: 0; }
-.chip-check span { display: inline-block; padding: .3rem .85rem; border: 2px solid var(--maroon); border-radius: 99px; cursor: pointer; transition: background .12s; }
+.chip-check span { display: inline-block; padding: .3rem .85rem; border: 2px solid var(--maroon); border-radius: 99px; cursor: pointer; transition: background .15s, color .15s, transform .12s; }
 .chip-check span:hover { background: rgba(58, 0, 5, .1); }
 .chip-check input:checked + span { background: var(--maroon); color: var(--cream); }
 
@@ -207,7 +208,7 @@ label .hint { font-weight: 400; }   /* the contact format guide sits inside a la
 .match-card .badge { margin-bottom: 0; white-space: nowrap; }
 .match-days { font-size: .95rem; color: var(--muted); }
 .chip.day { background: transparent; color: var(--maroon); border: 2px solid var(--maroon); padding: .05rem .7rem; font-weight: 700; }
-.match-card .btn.small { align-self: flex-end; margin: .3rem 0 0; min-height: 2.8rem; padding: .5rem 1.3rem; border: 2px solid var(--maroon-dark); border-radius: 999px; background: var(--gold); color: var(--maroon-dark); font-size: 1rem; box-shadow: 0 3px 0 var(--maroon-dark); cursor: pointer; }   /* Connect: same look as Mark as completed */
+.match-card .btn.small { align-self: flex-end; margin: auto 0 0; min-height: 2.8rem; padding: .5rem 1.3rem; border: 2px solid var(--maroon-dark); border-radius: 999px; background: var(--gold); color: var(--maroon-dark); font-size: 1rem; box-shadow: 0 3px 0 var(--maroon-dark); cursor: pointer; }   /* Connect: same look as Mark as completed */
 .match-card .btn.small:hover { background: #dba93a; }
 .match-card .btn.small:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--maroon-dark); }
 .req-head { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
@@ -305,7 +306,8 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
 @media (max-width: 800px) {
   .auth-layout { grid-template-columns: 1fr; padding: 0; }
   .auth-art { display: none; }
-  .auth-side { min-height: calc(100dvh - var(--header-h) - var(--bottom-bar)); padding: 1rem; }
+  .auth-layout { min-height: 0; }
+  .auth-side { min-height: calc(100dvh - var(--header-h) - var(--page-bottom)); padding: 1rem; }
 }
 
 /* ===== Phone: the menu becomes a bottom tab bar ===== */
@@ -343,7 +345,12 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
   nav a, nav button { position: relative; flex: none; display: flex; align-items: center; justify-content: center; width: 2.9rem; height: 2.9rem; padding: 0; border-radius: 50%; font-size: 0; border-bottom: 0; background: rgba(241, 232, 210, .14); transition: background .15s, color .15s; }   /* icon-only circles (the label text stays for screen readers) */
   nav a:active, nav button:active { background: rgba(241, 232, 210, .28); }
   nav a.active, nav button[aria-expanded="true"] { background: var(--gold); }   /* the current page / open menu gets the lit-up circle */
-  #inboxCount[data-n]:not([data-n=""])::after { content: attr(data-n); position: absolute; top: .1rem; right: .1rem; margin-left: 0; min-width: 1.1rem; height: 1.1rem; padding: 0 .25rem; border-radius: 999px; background: #000; color: #fff; font-size: .65rem; font-weight: 700; line-height: 1.1rem; text-align: center; }
+  /* Inbox badge on the tab bar: same look as the dashboard's red badge (red, white number, ring in the bar's colour, pops in) */
+  #inboxCount[data-n]:not([data-n=""])::after {
+    content: attr(data-n); box-sizing: border-box; position: absolute; top: -.2rem; right: -.2rem; margin-left: 0; min-width: 1.3rem; height: 1.3rem; padding: 0 .35rem; border-radius: 999px;
+    background: #e63946; color: #fff; font-size: .75rem; font-weight: 700; line-height: 1.3rem; text-align: center; box-shadow: 0 0 0 3px var(--maroon-dark);
+    animation: badgePop .4s cubic-bezier(.2, 1.6, .4, 1) backwards;   /* no delay: the number pops in the moment it is known */
+  }
   nav a.active, nav button, nav button[aria-expanded="true"] { border-bottom: 0; }
   .panel, #skillsPanel { position: fixed; left: .9rem; right: .9rem; top: auto; width: auto; bottom: calc(var(--bottom-bar) + env(safe-area-inset-bottom, 0px) + .6rem); }   /* same side margins as the tab bar */
   #skillsPanel { max-height: calc(100dvh - var(--header-h) - var(--bottom-bar) - env(safe-area-inset-bottom, 0px) - 1.6rem); }
@@ -360,7 +367,7 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
   .more-item { display: flex; align-items: center; gap: .7rem; width: 100%; padding: .8rem .9rem; border: 0; border-radius: 10px; background: rgba(58, 0, 5, .07); color: var(--maroon-dark); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
   .more-item:active { background: rgba(58, 0, 5, .16); }
   :root { --header-h: calc(4.2rem + env(safe-area-inset-top, 0px)); }
-  body.signed-in { padding-bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)); --bottom-bar: 4.4rem; }
+  body.signed-in { padding-bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)); --bottom-bar: 4.4rem; --page-bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)); }
 
   section { padding: 1.5rem 1rem 2.5rem; }
   .hero { padding: 4rem 1rem 2.4rem; }
@@ -402,3 +409,170 @@ input[name="section"]:not(:placeholder-shown) { text-transform: uppercase; }
 .footer-team { display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem 1.4rem; margin: 1.1rem 0 0; padding: 0; list-style: none; }
 .footer-copy { margin: 1.1rem 0 0; padding-top: 1rem; border-top: 1px solid rgba(241, 232, 210, .25); font-size: .9rem; color: rgba(241, 232, 210, .75); }
 @media (max-width: 700px) { .footer-team { flex-direction: column; gap: .2rem; } }
+
+/* ==========================================================
+   Dashboard (home page when logged in)
+   ========================================================== */
+body:not(.signed-in) .dashboard { display: none; }
+body.signed-in .guest-home { display: none; }
+.dash-hero { padding-bottom: 1.4rem; }
+.dash-hero .lead { margin: 1rem auto .9rem; }
+.dash-hero .stats { margin-bottom: 0; }
+.dash-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.8rem 1rem; justify-items: center;
+  max-width: 34rem; margin: 0 auto; padding: 1.2rem 1.2rem 3rem;
+}
+@media (min-width: 900px) { .dash-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); max-width: 62rem; } }
+.dash-item {
+  display: flex; flex-direction: column; align-items: center; gap: .75rem; width: 100%; padding: 0; border: 0; background: none;
+  font: inherit; color: var(--maroon-dark); text-decoration: none; cursor: pointer;
+  animation: dashIn .5s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--n, 0) * 70ms);
+}
+.dash-item:hover { color: var(--maroon-dark); }
+.dash-item:focus-visible { outline: none; }
+.dash-circle {
+  position: relative; display: grid; place-items: center; width: clamp(5.2rem, 24vw, 7.5rem); aspect-ratio: 1; border-radius: 50%;
+  background: var(--maroon); box-shadow: 0 8px 20px rgba(58, 0, 5, .28);
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.dash-circle img { display: block; width: 48%; height: auto; object-fit: contain; pointer-events: none; }
+.dash-emoji { font-size: clamp(2rem, 9vw, 2.9rem); line-height: 1; }
+.dash-label { font-family: var(--display); font-size: 1.02rem; font-weight: 700; line-height: 1.2; text-align: center; }
+@media (hover: hover) {
+  .dash-item:hover .dash-circle { transform: translateY(-5px) scale(1.04); background: var(--maroon-hover); box-shadow: 0 14px 26px rgba(58, 0, 5, .32), 0 0 0 4px var(--gold); }
+}
+.dash-item:focus-visible .dash-circle { transform: translateY(-5px) scale(1.04); box-shadow: 0 0 0 4px var(--gold); }
+.dash-item:active .dash-circle { transform: scale(.93); }
+.dash-badge {
+  position: absolute; top: .1rem; right: .1rem; min-width: 1.5rem; height: 1.5rem; padding: 0 .4rem; border-radius: 999px;
+  background: #e63946; color: #fff; font-size: .8rem; font-weight: 700; line-height: 1.5rem; text-align: center; box-shadow: 0 0 0 3px var(--cream);
+  animation: badgePop .4s cubic-bezier(.2, 1.6, .4, 1) .5s backwards;
+}
+/* Quick Edit / Request: the circle lights up gold with a ring pulse while its panel is open */
+.dash-circle::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
+.dash-item[aria-expanded="true"] .dash-circle { background: var(--gold); transform: translateY(-5px) scale(1.06); box-shadow: 0 14px 26px rgba(58, 0, 5, .32), 0 0 0 4px var(--maroon-dark); }
+.dash-item[aria-expanded="true"] .dash-circle::after { animation: ringPulse .7s ease-out; }
+.dash-item[aria-expanded="true"] .dash-emoji { animation: emojiWiggle .5s ease; }
+@keyframes ringPulse { from { box-shadow: 0 0 0 0 rgba(201, 150, 47, .8); } to { box-shadow: 0 0 0 1.6rem rgba(201, 150, 47, 0); } }
+@keyframes emojiWiggle { 25% { transform: rotate(-14deg) scale(1.15); } 60% { transform: rotate(10deg) scale(1.1); } to { transform: none; } }
+@keyframes dashIn { from { opacity: 0; transform: translateY(16px) scale(.88); } to { opacity: 1; transform: none; } }
+@keyframes badgePop { from { transform: scale(0); } to { transform: none; } }
+
+/* Find my matches: read-only summary of the account's choices */
+.match-profile { display: flex; flex-direction: column; gap: .8rem; max-width: 40rem; padding: 1rem 1.1rem; background: var(--paper); border: 2px solid var(--maroon); border-radius: 12px; box-shadow: var(--shadow); }
+.match-profile:empty { display: none; }
+.match-edit-hint { margin: .6rem 0 1.1rem; }
+
+/* ==========================================================
+   Animations
+   ========================================================== */
+/* Dropdowns and sheets: their pop in/out is done in script.js (setPanel) */
+.panel { transform-origin: top left; }
+.menu { transform-origin: top right; }
+@media (max-width: 700px) {
+  .panel { transform-origin: bottom center; }
+  .guest-menu { transform-origin: top center; }
+  /* Home on a phone: the dashboard circles replace the bottom tab bar */
+  body.on-home nav { display: none; }
+  body.signed-in.on-home { padding-bottom: 0; }   /* --bottom-bar stays, so menus sit exactly where they do on other pages */
+  .dash-grid { gap: 1.5rem .6rem; padding-inline: 1rem; }
+}
+
+/* Cards fade up one after another (script.js numbers them with --i). Hover lifts them. */
+.card { transition: transform .2s ease, box-shadow .2s ease; animation: cardIn .4s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 45ms); }
+.cards.no-anim .card { animation: none; }
+@media (hover: hover) { .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(58, 0, 5, .16); } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* Skill radar: rows slide in, bars grow */
+.radar-row { transition: background .15s; animation: cardIn .4s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 55ms); }
+.bar div { transform-origin: left center; animation: barGrow .7s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 55ms + .15s); }
+@keyframes barGrow { from { transform: scaleX(0); } to { transform: none; } }
+
+/* Forms, sign-up steps and status messages ease in when they appear */
+.auth-form:not([hidden]), .signup-step:not([hidden]), #welcome:not([hidden]) { animation: viewIn .3s cubic-bezier(.2, .8, .2, 1); }
+[role="status"]:not(:empty) { animation: viewIn .25s ease-out; }
+.chip-check span:active { transform: scale(.94); }
+nav a, nav button { transition: color .15s; }
+.progress-bar { transition: width .4s cubic-bezier(.2, .8, .2, 1); }
+
+/* Popups (edit profile, swap request): fade and rise on open, fade out on close.
+   Browsers without @starting-style support just open and close instantly. */
+dialog { opacity: 0; transform: translateY(14px) scale(.97); transition: opacity .2s ease, transform .2s ease, overlay .2s allow-discrete, display .2s allow-discrete; }
+dialog[open] { opacity: 1; transform: none; }
+@starting-style { dialog[open] { opacity: 0; transform: translateY(14px) scale(.97); } }
+dialog::backdrop { background: rgba(58, 0, 5, 0); transition: background .2s ease, overlay .2s allow-discrete, display .2s allow-discrete; }
+dialog[open]::backdrop { background: rgba(58, 0, 5, .6); }
+@starting-style { dialog[open]::backdrop { background: rgba(58, 0, 5, 0); } }
+
+/* The Skill filter list (customizable select): slides open, arrow flips */
+@supports (appearance: base-select) {
+  #skillFilter::picker(select) { opacity: 0; transform: translateY(-6px); transition: opacity .15s ease, transform .15s ease, display .15s allow-discrete, overlay .15s allow-discrete; }
+  #skillFilter::picker(select):popover-open { opacity: 1; transform: none; }
+  @starting-style { #skillFilter::picker(select):popover-open { opacity: 0; transform: translateY(-6px); } }
+  #skillFilter::picker-icon { transition: rotate .2s ease; }
+  #skillFilter:open::picker-icon { rotate: 180deg; }
+  #skillFilter option { transition: background .12s; }
+}
+
+/* People who ask their device for less motion get (almost) none */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+
+/* Phone: the Request sheet rides on top of the on-screen keyboard (script.js sets --kb to the keyboard's height) */
+:root { --kb: 0px; }
+@media (max-width: 700px) {
+  .panel { transition: bottom .25s ease; }
+  body.keyboard-open #requestPanel { bottom: calc(var(--kb) + .6rem); }
+}
+
+/* Phone keyboard open: popups shrink to the space above it, and the page gets extra room so every field can scroll into view */
+@media (max-width: 700px) {
+  body.keyboard-open dialog { inset-block-start: .6rem; inset-block-end: calc(var(--kb) + .6rem); max-height: calc(100dvh - var(--kb) - 1.2rem); }
+  body.keyboard-open { padding-bottom: calc(var(--kb) + 1.5rem) !important; }
+}
+
+/* Phone: no big empty strip under the footer */
+@media (max-width: 700px) {
+  .site-footer { margin-bottom: calc(.8rem + env(safe-area-inset-bottom, 0px)); }
+  .dash-grid { padding-bottom: 2rem; }
+}
+
+/* Swap request popup: the summary uses the same labelled rows as the match cards */
+.req-summary { display: flex; flex-direction: column; gap: .8rem; padding: .8rem 1rem; border-radius: 12px; background: rgba(58, 0, 5, .06); }
+.req-summary:empty { display: none; }
+
+/* ===== Scroll lock: while a popup or dropdown is open, only the popup scrolls, never the page behind it ===== */
+html.scroll-locked { overflow: hidden; }   /* only html: locking body too would un-stick the header and send it (and its menus) back to the top of the page */
+html.scroll-locked body { padding-right: var(--scrollbar-w, 0px); }   /* stops the page jumping sideways when the scrollbar disappears */
+dialog, .panel { overscroll-behavior: contain; }                      /* scrolling past the end of a popup doesn't scroll the page */
+
+/* ===== Logged-in home on a computer: everything fits on one screen, so the page doesn't scroll =====
+   Sizes follow the window HEIGHT (vh), so the logo, headline, circles and footer shrink on shorter screens. */
+@media (min-width: 900px) {
+  body.signed-in.on-home #home.active { display: flex; flex-direction: column; min-height: calc(100dvh - var(--header-h)); }
+  body.signed-in.on-home .dashboard { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  body.signed-in.on-home .dash-hero { padding: clamp(1.4rem, 5vh, 3.5rem) 1.2rem clamp(.4rem, 1.6vh, 1.2rem); }
+  body.signed-in.on-home .dash-hero .hero-mark { width: clamp(3rem, 9vh, 5.5rem); height: clamp(3rem, 9vh, 5.5rem); margin-bottom: clamp(.5rem, 2.2vh, 1.6rem); border-radius: clamp(14px, 2.6vh, 22px); }
+  body.signed-in.on-home .dash-hero .hero-mark::before { height: clamp(1rem, 3.6vh, 2.6rem); }
+  body.signed-in.on-home .dash-hero h1 { font-size: clamp(2.2rem, min(8vw, 9.5vh), 5.6rem); }
+  body.signed-in.on-home .dash-hero .lead { margin: clamp(.3rem, 1.4vh, 1rem) auto clamp(.3rem, 1.1vh, .9rem); font-size: clamp(1rem, 2.4vh, 1.2rem); }
+  body.signed-in.on-home .dash-hero .stats { padding-block: .2rem; }
+  body.signed-in.on-home .dash-grid { padding: clamp(.4rem, 1.8vh, 1.2rem) 1.2rem clamp(.6rem, 2.4vh, 2rem); }
+  body.signed-in.on-home .dash-item { gap: clamp(.35rem, 1.2vh, .75rem); }
+  body.signed-in.on-home .dash-circle { width: clamp(3.8rem, min(12vw, 13vh), 7.5rem); }
+  body.signed-in.on-home .dash-label { font-size: clamp(.9rem, 2.1vh, 1.02rem); }
+  body.signed-in.on-home .site-footer { margin-bottom: clamp(.5rem, 1.8vh, 1.5rem); padding: clamp(.7rem, 2.4vh, 2rem) 1.2rem; }
+  body.signed-in.on-home .footer-name { font-size: clamp(1.3rem, 3.4vh, 2rem); }
+  body.signed-in.on-home .footer-school { margin-top: .1rem; }
+  body.signed-in.on-home .footer-team { margin-top: clamp(.4rem, 1.4vh, 1.1rem); }
+  body.signed-in.on-home .footer-copy { margin-top: clamp(.4rem, 1.4vh, 1.1rem); padding-top: clamp(.4rem, 1.3vh, 1rem); }
+  body.signed-in.on-home .footer-copy br { display: none; }   /* one line instead of two */
+}
+
+/* Contact format hint (sign-up, edit profile, swap request): each example stays on one line, never split in the middle */
+.contact-hint { display: flex; flex-direction: column; gap: .2rem; font-weight: 400; line-height: 1.45; text-wrap: pretty; }
+.contact-hint strong { font-weight: 600; }
+.nb { white-space: nowrap; }
