@@ -38,10 +38,8 @@ body {
 main { flex: 1; }
 h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -.02em; }
 legend, .btn, .step-num { font-weight: 700; }
-nav a { font-weight: 600; }
 button, input, select, textarea { font-family: inherit; }
 /* Bugaki is ONLY used for the project name in the top left */
-.logo-text { font-family: var(--logo-font); font-weight: 400; letter-spacing: 0; }
 :focus-visible { outline: 3px solid var(--crimson); outline-offset: 2px; }
 .chip-check input:focus-visible + span { outline: 3px solid var(--crimson); outline-offset: 2px; }
 
@@ -57,11 +55,11 @@ button, input, select, textarea { font-family: inherit; }
 .pill-right { position: relative; padding: .4rem; gap: .2rem; }   /* even padding all round so the button sits centred */
 .logo { display: inline-flex; align-items: center; gap: .6rem; color: var(--cream); font-size: 1.25rem; line-height: 1; text-decoration: none; }
 .logo-img { height: 2.2rem; width: auto; display: block; flex: none; }   /* change 2rem to resize the logo */
-.logo-text { line-height: 1; position: relative; top: 0; }   /* if the name looks too high or low next to the logo, try top: .05em or top: -.05em */
+.logo-text { font-family: var(--logo-font); font-weight: 400; letter-spacing: 0; line-height: 1; position: relative; top: 0; }   /* if the name looks too high or low next to the logo, try top: .05em or top: -.05em */
 nav { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; padding-right: .5rem; }
 body:not(.signed-in) nav { display: none; }   /* the menu only shows once signed in */
 nav a[href="#home"] { display: none; }        /* the logo already goes home (phone tab bar shows it again) */
-nav a { color: var(--cream); text-decoration: none; padding: .2rem 0; border-bottom: 2px solid transparent; }
+nav a { font-weight: 600; color: var(--cream); text-decoration: none; padding: .2rem 0; border-bottom: 2px solid transparent; }
 nav a:hover { color: var(--gold); }
 nav a.active { color: #fff7e0; border-bottom-color: var(--cream); }
 #inboxCount { font-size: 0; }   /* hides the plain "(3)" text; the badge below shows the number instead */
@@ -120,7 +118,6 @@ section { max-width: 960px; margin: 0 auto; padding: 2rem 1.2rem 3rem; }
 h2 { font-size: 2rem; margin: 0; color: var(--maroon); line-height: 1.2; }
 .view > h2 { font-size: clamp(1.8rem, 4vw, 2.3rem); }
 .view > h2 + p { margin: .3rem 0 1.4rem; color: var(--muted); max-width: 60ch; }
-#radar > h2 + p { max-width: none; }   /* let the radar description run as wide as the radar box */
 
 /* ===== Hero ===== */
 .hero {
@@ -181,6 +178,10 @@ select, .filters input[type="search"] { padding: .5rem .6rem; font: inherit; col
 .filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem; margin: 0 0 1.4rem; }
 .filters label { display: flex; flex-direction: column; gap: .2rem; flex: 1 1 10rem; font-weight: 600; }
 .filters label:first-child { flex: 2 1 14rem; }
+.filters .day-filter { flex: 1 1 100%; display: flex; flex-direction: column; gap: .35rem; }
+.filter-label { font-weight: 600; }
+.filter-label small { font-weight: 400; color: var(--muted); }
+.filters .day-filter .chip-check { flex: 0 0 auto; flex-direction: row; font-weight: 400; }
 .toggle { display: inline-flex; align-items: center; gap: .4rem; margin-left: 1rem; vertical-align: middle; font-weight: 600; cursor: pointer; }
 .toggle input { accent-color: var(--gold); }   /* tick box uses the gold from the Wants pills instead of browser blue */
 .hint { font-size: .9rem; color: var(--muted); margin: 0; }
@@ -372,3 +373,23 @@ dialog form label { display: flex; flex-direction: column; gap: .25rem; font-wei
 }
 /* Section is shown in capitals while typing (the code also saves it in capitals) */
 input[name="section"]:not(:placeholder-shown) { text-transform: uppercase; }
+
+/* ===== Browse filters ===== */
+/* Days stay on ONE row on phones */
+@media (max-width: 700px) {
+  .filters .day-filter .chips { flex-wrap: nowrap; gap: .25rem; }
+  .filters .day-filter .chip-check { flex: 1 1 0; min-width: 0; }
+  .filters .day-filter .chip-check span { display: block; width: 100%; padding: .35rem 0; text-align: center; font-size: .85rem; }
+}
+/* Skill dropdown options turn gold (not blue) on hover. Uses the customizable <select> (recent Chrome/Edge); other browsers keep their native list. */
+@supports (appearance: base-select) {
+  #skillFilter, #skillFilter::picker(select) { appearance: base-select; }
+  #skillFilter::picker(select) { padding: .25rem; border: 2px solid var(--maroon); border-radius: 8px; background: #fff; max-height: 18rem; }
+  #skillFilter option { padding: .4rem .7rem; border-radius: 6px; color: var(--ink); background: transparent; }
+  #skillFilter option:hover, #skillFilter option:focus { background: var(--gold); color: var(--ink); }
+}
+
+/* ===== Skill radar intro: two plain muted lines, same size, no bold ===== */
+#radar > .radar-intro { max-width: none; margin: 0 0 .35rem; color: var(--muted); font-size: 1rem; }
+#radar > .radar-tip { margin-bottom: 1.1rem; font-size: .95rem; }
+#radar > .radar-tip strong { color: var(--maroon); }

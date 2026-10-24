@@ -213,7 +213,7 @@
     <div class="filters">
       <label>Search <input type="search" id="searchBox" placeholder="Name, section or skill"></label>
       <label>Skill <select id="skillFilter"></select></label>
-      <label>Day <select id="dayFilter"></select></label>
+      <div class="day-filter"><span class="filter-label">Days <small>(pick one or more)</small></span><div class="chips" id="browseDays"></div></div>
     </div>
     <div class="cards" id="cards"></div>
   </section>
@@ -232,7 +232,8 @@
 
   <section id="radar" class="view members-only">
     <h2>Skill radar</h2>
-    <p>The most wanted skills on campus. Skills with no teacher yet are marked, so you know where you're needed.<br>Tap a skill to see those students in Browse.</p>
+    <p class="radar-intro">What students want to learn most. Skills in red have no teacher yet, so you could fill the gap.</p>
+    <p class="radar-intro radar-tip"><strong>Tip:</strong> tap a skill to see those students in Browse.</p>
     <div id="radarList"></div>
   </section>
 </main>

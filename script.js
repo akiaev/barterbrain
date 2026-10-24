@@ -30,7 +30,6 @@ const el = {
   stats: document.getElementById("stats"),
   searchBox: document.getElementById("searchBox"),
   skillFilter: document.getElementById("skillFilter"),
-  dayFilter: document.getElementById("dayFilter"),
   cards: document.getElementById("cards"),
   matchBtn: document.getElementById("matchBtn"),
   mutualOnly: document.getElementById("mutualOnly"),
@@ -219,9 +218,9 @@ function personCard(person) {
   </article>`;
 }
 
-function matchesFilters(person, skill, day, query) {
+function matchesFilters(person, skill, days, query) {
   const skillOk = skill === "all" || person.teach.includes(skill) || person.learn.includes(skill);
-  const dayOk = day === "all" || person.days.includes(day);
+  const dayOk = days.length === 0 || days.some(d => person.days.includes(d));   // free on ANY of the picked days
   const text = [firstName(person.name), person.section].concat(person.teach, person.learn).join(" ").toLowerCase();
   const queryOk = !query || text.includes(query);
   return skillOk && dayOk && queryOk;
@@ -229,9 +228,9 @@ function matchesFilters(person, skill, day, query) {
 
 function renderBrowse() {
   const skill = el.skillFilter.value;
-  const day = el.dayFilter.value;
+  const days = getChecked("browseDay");
   const query = el.searchBox.value.trim().toLowerCase();
-  const shown = people.filter(person => matchesFilters(person, skill, day, query));
+  const shown = people.filter(person => matchesFilters(person, skill, days, query));
 
   el.cards.innerHTML = shown.length
     ? shown.map(personCard).join("")
@@ -791,6 +790,14 @@ async function saveProfile(event) {
                     username: newUsername, key: ownKey,
                     teach, learn, days, mode, editedAt: Date.now() };
 
+  // Nothing changed: don't send anything, so no extra row lands in the Sheet
+  if (updated.name === currentUser.name && updated.section === currentUser.section &&
+      updated.username === currentUser.username && contact === getContact() && mode === currentUser.mode &&
+      sameItems(teach, currentUser.teach) && sameItems(learn, currentUser.learn) && sameItems(days, currentUser.days)) {
+    document.getElementById("editDialog").close();
+    return;
+  }
+
   // An edit is a new row in the same sign-up Form. The newest row for a username wins.
   const data = new URLSearchParams();
   data.append(ENTRY.name, updated.name);
@@ -837,6 +844,11 @@ function fillQuickSkills() {   // runs each time the My skills dropdown opens
     ? "" : "Please log out and log in again, then you can edit your profile.";
 }
 
+function sameItems(a, b) {   // true if both lists hold the same items, in any order
+  const x = [...(a || [])].sort(), y = [...(b || [])].sort();
+  return x.length === y.length && x.every((item, i) => item === y[i]);
+}
+
 async function saveSkills(event) {
   event.preventDefault();
   const form = event.target;
@@ -847,6 +859,14 @@ async function saveSkills(event) {
   if (!currentUser.pinHash) { status.textContent = "Please log out and log in again, then you can edit your profile."; return; }
   if (days.length === 0 || !mode) { status.textContent = "Pick your free days and a mode."; return; }
   if (teach.length === 0 && learn.length === 0) { status.textContent = "Pick at least one skill to teach or learn."; return; }
+
+  // Nothing changed: don't send anything, so no extra row lands in the Sheet
+  if (sameItems(teach, currentUser.teach) && sameItems(learn, currentUser.learn) &&
+      sameItems(days, currentUser.days) && mode === currentUser.mode) {
+    status.textContent = "";
+    window.closeMenus();
+    return;
+  }
 
   // Same idea as Edit my profile: send a new row with the same username. Only the skills change.
   const updated = { ...currentUser, teach, learn, days, mode, editedAt: Date.now() };
@@ -905,7 +925,7 @@ function fillSelect(select, items, allText) {
 const CHIP_GROUPS = [   // [box id, group name, "skills" or "days"]
   ["joinTeach", "joinTeach", "skills"], ["joinLearn", "joinLearn", "skills"], ["joinDays", "joinDays", "days"],
   ["editTeach", "editTeach", "skills"], ["editLearn", "editLearn", "skills"], ["editDays", "editDays", "days"],
-  ["teachChips", "teach", "skills"], ["learnChips", "learn", "skills"], ["dayChips", "day", "days"],
+  ["teachChips", "teach", "skills"], ["learnChips", "learn", "skills"], ["dayChips", "day", "days"], ["browseDays", "browseDay", "days"],
   ["quickTeach", "quickTeach", "skills"], ["quickLearn", "quickLearn", "skills"], ["quickDays", "quickDays", "days"]
 ];
 
@@ -966,7 +986,7 @@ async function requestSkill(button) {   // sends a request to you; nothing is ad
 
 function showSkillInBrowse(skill) {   // used by the Skill radar
   el.skillFilter.value = skill;
-  el.dayFilter.value = "all";
+  document.querySelectorAll('input[name="browseDay"]').forEach(box => { box.checked = false; });
   el.searchBox.value = "";
   renderBrowse();
   location.hash = "#browse";
@@ -974,7 +994,7 @@ function showSkillInBrowse(skill) {   // used by the Skill radar
 
 function connectControls() {
   el.skillFilter.addEventListener("change", renderBrowse);
-  el.dayFilter.addEventListener("change", renderBrowse);
+  document.getElementById("browseDays").addEventListener("change", renderBrowse);
   let hasSearched = false;   // the toggle only re-filters results that "Find matches" already put on screen
   el.matchBtn.addEventListener("click", () => { hasSearched = true; renderMatches(); });
   el.mutualOnly.addEventListener("change", () => { if (hasSearched) renderMatches(); });
@@ -1023,7 +1043,6 @@ async function init() {
   // official list + the skills you approved (students can only request new ones)
   allSkills = computeSkills();
   buildAllChips();
-  fillSelect(el.dayFilter, DAYS, "Any day");
 
   connectControls();
   connectAccounts();
