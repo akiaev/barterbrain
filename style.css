@@ -1,0 +1,305 @@
+/* ===== Fonts ===== */
+/* Put the downloaded Bugaki font file inside the fonts folder. */
+@font-face {
+  font-family: "Bugaki";
+  src: url("fonts/BugakiRegular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* ===== Colors ===== */
+:root {
+  --maroon-dark: #3a0005;
+  --maroon: #3a0005;   /* main colour, same as the pills */
+  --crimson: #8e0b33;   /* only for small error text and the radar bars */
+  --maroon-hover: #5a0a14;
+  --header-h: 5rem;      /* height of the floating header: used to make the account screens fit exactly */
+  --bottom-bar: 0rem;    /* phone tab bar height (only when logged in) */
+  --cream: #f1e8d2;
+  --paper: #fbf6e8;
+  --gold: #c9962f;
+  --ink: #2a1418;
+  --muted: #6b5459;
+  --line: rgba(58, 0, 5, .28);
+  --shadow: 0 2px 0 rgba(58, 0, 5, .14);
+  --logo-font: "Bugaki", Georgia, "Times New Roman", serif;   /* ONLY for the project name */
+  --display: "Inter Tight", "Source Sans 3", system-ui, sans-serif;   /* headlines */
+}
+
+/* ===== Base styles ===== */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* makes the hidden attribute always win */
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;   /* with main { flex: 1 } the footer stays at the bottom edge */
+  font-family: "Source Sans 3", system-ui, sans-serif; background: var(--cream); color: var(--ink); line-height: 1.55;
+}
+main { flex: 1; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -.02em; }
+legend, .btn, .step-num { font-weight: 700; }
+nav a { font-weight: 600; }
+button, input, select, textarea { font-family: inherit; }
+/* Bugaki is ONLY used for the project name in the top left */
+.logo-text { font-family: var(--logo-font); font-weight: 400; letter-spacing: 0; }
+:focus-visible { outline: 3px solid var(--crimson); outline-offset: 2px; }
+.chip-check input:focus-visible + span { outline: 3px solid var(--crimson); outline-offset: 2px; }
+
+/* ===== Header: two floating pills (logo + menu on the left, Login / Sign up on the right) ===== */
+.site-header {
+  position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between;
+  gap: .8rem; padding: .8rem 1.2rem; pointer-events: none; align-items: stretch; height: var(--header-h);   /* the empty gap between the pills stays clickable-through */
+}
+.pill {
+  pointer-events: auto; display: flex; align-items: center; gap: .4rem 1.4rem; min-height: 3.4rem; padding: .45rem 1rem;
+  background: var(--maroon-dark); border-radius: 16px; box-shadow: 0 6px 20px rgba(58, 0, 5, .22);
+}
+.pill-right { position: relative; padding: .4rem; gap: .2rem; }   /* even padding all round so the button sits centred */
+.logo { display: inline-flex; align-items: center; gap: .6rem; color: var(--cream); font-size: 1.25rem; line-height: 1; text-decoration: none; }
+.logo-img { height: 2.2rem; width: auto; display: block; flex: none; }   /* change 2rem to resize the logo */
+.logo-text { line-height: 1; position: relative; top: 0; }   /* if the name looks too high or low next to the logo, try top: .05em or top: -.05em */
+nav { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; padding-right: .5rem; }
+body:not(.signed-in) nav { display: none; }   /* the menu only shows once signed in */
+nav a[href="#home"] { display: none; }        /* the logo already goes home (phone tab bar shows it again) */
+nav a { color: var(--cream); text-decoration: none; padding: .2rem 0; border-bottom: 2px solid transparent; }
+nav a:hover { color: #fff7e0; }
+nav a.active { color: #fff7e0; border-bottom-color: var(--cream); }
+nav button { padding: .2rem 0; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--cream); font: inherit; font-weight: 600; cursor: pointer; }
+nav button:hover { color: #fff7e0; }
+nav button[aria-expanded="true"] { color: #fff7e0; border-bottom-color: var(--cream); }
+.pill-left { position: relative; }
+.pill-link { display: inline-flex; align-items: center; height: 2.6rem; padding: 0 .9rem; color: var(--cream); text-decoration: none; font-weight: 600; }
+.pill-link:hover { color: #fff7e0; }
+.pill-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; height: 2.6rem; padding: 0 1.1rem; border: 0; border-radius: 10px; background: var(--cream); color: var(--maroon-dark); font: inherit; font-weight: 700; line-height: 1; text-decoration: none; cursor: pointer; }
+.caret { width: .45rem; height: .45rem; margin-top: -.2rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform .15s; }
+.pill-btn[aria-expanded="true"] .caret { margin-top: .2rem; transform: rotate(225deg); }
+
+/* Account button: plain maroon like the pill (only Sign up gets the cream inner button) */
+.account-menu .pill-btn { background: transparent; color: var(--cream); }
+.account-menu .pill-btn:hover, .account-menu .pill-btn[aria-expanded="true"] { background: rgba(241, 232, 210, .14); }
+
+/* Dims the page behind the open dropdown */
+.backdrop { position: fixed; inset: 0; z-index: 4; background: rgba(20, 0, 2, .55); opacity: 0; pointer-events: none; transition: opacity .2s; }
+.backdrop.open { opacity: 1; pointer-events: auto; }
+
+/* Request-a-skill dropdown (under the top-left menu) */
+.panel { position: absolute; left: 0; top: calc(100% + .6rem); width: min(22rem, calc(100vw - 2.4rem)); padding: 1rem; background: var(--cream); color: var(--ink); border-radius: 14px; box-shadow: 0 10px 28px rgba(58, 0, 5, .35); animation: viewIn .15s ease-out; }
+.panel .sk-title { color: var(--maroon-dark); }
+.panel input { padding: .6rem .8rem; font: inherit; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
+.panel input:focus { border-color: var(--maroon); outline: none; }
+
+/* Account dropdown */
+.account-menu { position: static; }
+.menu { position: absolute; right: 0; top: calc(100% + .6rem); min-width: 12rem; padding: .4rem; background: var(--cream); border-radius: 14px; box-shadow: 0 10px 28px rgba(58, 0, 5, .35); animation: viewIn .15s ease-out; }
+.menu a, .menu button { display: block; width: 100%; padding: .65rem .8rem; border: 0; border-radius: 9px; background: none; color: var(--maroon-dark); font: inherit; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
+.menu a:hover, .menu button:hover { background: rgba(58, 0, 5, .09); }
+.menu button { margin-top: .15rem; border-top: 1px solid rgba(58, 0, 5, .16); border-radius: 0 0 9px 9px; }
+.pill-btn:hover { background: #fff7e0; }
+.site-header :focus-visible { outline-color: var(--cream); }
+.ico { display: none; }
+
+/* ===== App screens (one page at a time) ===== */
+section { max-width: 960px; margin: 0 auto; padding: 2rem 1.2rem 3rem; }
+.view { display: none; }
+.view.active { display: block; animation: viewIn .2s ease-out; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .view.active { animation: none; } }
+#home { max-width: none; padding: 0; }
+h2 { font-size: 2rem; margin: 0; color: var(--maroon); line-height: 1.2; }
+.view > h2 { font-size: clamp(1.8rem, 4vw, 2.3rem); }
+.view > h2 + p { margin: .3rem 0 1.4rem; color: var(--muted); max-width: 60ch; }
+
+/* ===== Hero ===== */
+.hero {
+  text-align: center; padding: 4.5rem 1.2rem 3.5rem;
+  background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(201, 150, 47, .25), transparent 70%);
+}
+.hero-mark {
+  position: relative; display: grid; place-items: center; width: 5.5rem; height: 5.5rem; margin: 0 auto 1.8rem;
+  background: var(--maroon); border-radius: 22px; box-shadow: 0 10px 24px rgba(58, 0, 5, .3); transform: rotate(-6deg);
+}
+.hero-mark::before { content: ""; position: absolute; left: 50%; bottom: 100%; width: 2px; height: 3rem; background: var(--maroon); }
+.hero-mark img { width: 70%; height: auto; }
+.hero h1 { font-size: clamp(2.6rem, 8vw, 5.6rem); font-weight: 500; letter-spacing: -.045em; margin: 0; line-height: 1.02; color: var(--maroon-dark); }
+.lead { max-width: 46ch; margin: 1.2rem auto 1.4rem; font-size: 1.2rem; color: var(--ink); }
+.stats {
+  display: table; margin: 0 auto 1.6rem; padding: .3rem 1rem; font-size: .95rem; font-weight: 600; color: var(--maroon);
+  border: 1px solid var(--line); border-radius: 99px; background: rgba(58, 0, 5, .06);
+}
+.hero .btn { margin: .3rem .25rem; padding: .8rem 1.8rem; border-radius: 14px; }
+.hero .btn.ghost { background: transparent; color: var(--maroon); }
+.hero .btn.ghost:hover { background: rgba(58, 0, 5, .1); border-color: var(--maroon); }
+
+/* ===== How it works ===== */
+.steps { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.2rem 3rem; text-align: center; }
+.steps-row { list-style: none; padding: 0; margin: 1.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; text-align: left; }
+.steps-row li { background: var(--paper); border: 2px solid var(--maroon); border-radius: 12px; padding: 1.1rem; box-shadow: var(--shadow); }
+.step-num { display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--maroon); color: var(--cream); }
+.steps-row h3 { margin: .5rem 0 .2rem; color: var(--maroon); }
+.steps-row p { margin: 0; }
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-block; vertical-align: middle; padding: .65rem 1.4rem; border: 2px solid var(--maroon); border-radius: 8px;
+  background: var(--maroon); color: var(--cream); font-size: 1rem; line-height: 1.2; text-decoration: none; cursor: pointer;
+  transition: background .15s;
+}
+.btn:hover { background: var(--maroon-hover); border-color: var(--maroon-hover); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+.btn:disabled:hover { background: var(--maroon); border-color: var(--maroon); }
+.btn.small { padding: .35rem .9rem; font-size: .9rem; margin-top: .6rem; }
+.btn.ghost-dark { background: transparent; color: var(--maroon); margin-left: .5rem; }
+.btn.ghost-dark:hover { background: rgba(58, 0, 5, .1); border-color: var(--maroon); }
+
+/* ===== Skill chips and checkboxes ===== */
+.chip { display: inline-block; padding: .15rem .75rem; border-radius: 99px; background: var(--maroon); color: var(--cream); font-size: .9rem; margin: 0 .3rem .3rem 0; }
+.chip.want { background: var(--gold); color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+.chip-check input { position: absolute; opacity: 0; }
+.chip-check span { display: inline-block; padding: .3rem .85rem; border: 2px solid var(--maroon); border-radius: 99px; cursor: pointer; transition: background .12s; }
+.chip-check span:hover { background: rgba(58, 0, 5, .1); }
+.chip-check input:checked + span { background: var(--maroon); color: var(--cream); }
+
+/* ===== Forms and filters ===== */
+fieldset { border: 2px solid var(--line); border-radius: 12px; margin: 1rem 0; padding: .6rem 1rem 1rem; }
+legend { padding: 0 .4rem; color: var(--maroon); }
+select, .filters input[type="search"] { padding: .5rem .6rem; font: inherit; color: var(--ink); background: #fff; border: 2px solid var(--maroon); border-radius: 8px; }
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem; margin: 0 0 1.4rem; }
+.filters label { display: flex; flex-direction: column; gap: .2rem; flex: 1 1 10rem; font-weight: 600; }
+.filters label:first-child { flex: 2 1 14rem; }
+.toggle { display: inline-flex; align-items: center; gap: .4rem; margin-left: 1rem; vertical-align: middle; font-weight: 600; cursor: pointer; }
+.hint { font-size: .9rem; color: var(--muted); margin: 0; }
+[role="status"] { margin: .8rem 0 0; font-weight: 600; color: var(--crimson); }
+[role="status"]:empty { display: none; }
+
+/* ===== Cards ===== */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.cards > p, #radarList > p { grid-column: 1 / -1; margin: 0; padding: 2rem 1rem; text-align: center; color: var(--muted); border: 2px dashed var(--line); border-radius: 12px; }
+.card { background: var(--paper); border: 2px solid var(--maroon); border-radius: 12px; padding: 1.1rem; box-shadow: var(--shadow); }
+.card > div + div { margin-top: .5rem; }
+.card h3 { margin: 0; font-size: 1.2rem; color: var(--maroon); }
+.card .meta { font-size: .9rem; color: var(--muted); margin-bottom: .5rem; }
+.card.mutual { border-color: var(--gold); border-width: 3px; }
+.badge { display: inline-block; padding: .1rem .6rem; border-radius: 4px; font-size: .85rem; font-weight: 700; background: var(--gold); color: var(--ink); margin-bottom: .4rem; }
+.badge.oneway { background: #e3d9c0; }
+
+/* ===== Inbox request cards ===== */
+#inboxList { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.card.request-card { display: flex; flex-direction: column; gap: .8rem; }
+.card.request-card > div + div { margin-top: 0; }
+.req-head { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
+.req-head h3 { font-size: 1.3rem; }
+.req-date { font-size: .85rem; color: var(--muted); white-space: nowrap; }
+.req-user { margin-top: -.6rem !important; font-size: .9rem; color: var(--muted); }
+.req-label { margin-bottom: .25rem; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.req-msg { margin: 0; padding: .6rem .8rem; border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; background: rgba(58, 0, 5, .06); overflow-wrap: anywhere; }
+.req-contact { display: flex; flex-direction: column; padding: .6rem .8rem; border-radius: 10px; background: var(--maroon); color: var(--cream); overflow-wrap: anywhere; }
+.req-contact .req-label { margin-bottom: .1rem; color: rgba(241, 232, 210, .75); }
+.req-contact strong { font-size: 1.05rem; }
+
+/* ===== Skill radar ===== */
+#radarList { background: var(--paper); border: 2px solid var(--maroon); border-radius: 12px; padding: .5rem; box-shadow: var(--shadow); }
+.radar-row { display: grid; grid-template-columns: 9rem 1fr 11rem; gap: .8rem; align-items: center; margin: .2rem 0; }
+button.radar-row { width: 100%; background: none; border: 0; border-radius: 8px; padding: .5rem .6rem; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.radar-row:hover { background: rgba(58, 0, 5, .08); }
+.bar { background: #e0d4b6; border-radius: 4px; height: 1.1rem; }
+.bar div { background: var(--crimson); height: 100%; border-radius: 4px; }
+.need { color: var(--crimson); font-weight: 700; }
+
+/* ===== Account / sign-up (form on the left, logo on the right) ===== */
+#join { max-width: none; padding: 0; }
+.auth-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; padding: 0 1.5rem 1.5rem; align-items: start; min-height: calc(100dvh - var(--header-h) - var(--bottom-bar)); }
+.auth-side { display: flex; align-items: center; justify-content: center; min-height: calc(100dvh - var(--header-h) - var(--bottom-bar) - 1.5rem); padding: .5rem 1rem; }
+.auth-box { width: 100%; max-width: 430px; }
+.auth-art {
+  position: sticky; top: var(--header-h); height: calc(100dvh - var(--header-h) - var(--bottom-bar) - 1.5rem);
+  display: grid; place-items: center; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow);
+  background: radial-gradient(ellipse at 50% 35%, var(--maroon-hover) 0%, var(--maroon) 70%);
+}
+.auth-art img { width: 70%; max-width: 440px; height: auto; }   /* change 70% to resize the logo */
+.auth-head { text-align: center; margin-bottom: .9rem; }
+.auth-head h2 { font-size: clamp(1.35rem, 2.4vw, 1.6rem); text-wrap: balance; }
+.auth-head p { margin: .4rem 0 0; color: var(--muted); }
+#welcome { text-align: center; }
+.welcome-actions { display: flex; flex-direction: column; gap: .6rem; margin-top: 1rem; }
+.welcome-actions .btn, .welcome-actions .btn.ghost-dark { margin: 0; width: 100%; text-align: center; }
+.auth-form, .signup-step { display: flex; flex-direction: column; gap: .65rem; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+.field-row label { min-width: 0; }
+.field-row input { width: 100%; min-width: 0; }
+.auth-form label { display: flex; flex-direction: column; gap: .2rem; font-weight: 600; font-size: .92rem; }
+.auth-form input:not([type="radio"]):not([type="checkbox"]), dialog form textarea, dialog form input:not([type="radio"]):not([type="checkbox"]) {
+  padding: .6rem .8rem; font: inherit; font-weight: 400; border: 2px solid var(--line); border-radius: 12px; background: #fff;
+}
+.auth-form input:not([type="radio"]):not([type="checkbox"]):focus, dialog form textarea:focus, dialog form input:not([type="radio"]):not([type="checkbox"]):focus { border-color: var(--maroon); outline: none; }
+.auth-form .chip-check, dialog form .chip-check { flex-direction: row; font-weight: 400; }
+.auth-form fieldset { margin: 0; }
+.btn.block { width: 100%; padding: .75rem; margin-top: .2rem; }
+.hint.center { text-align: center; }
+.switch { text-align: center; margin: .2rem 0 0; }
+.link-btn { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--maroon); text-decoration: underline; cursor: pointer; }
+.link-btn:hover { color: var(--maroon-hover); }
+.progress-track { height: 6px; border-radius: 99px; background: rgba(58, 0, 5, .15); overflow: hidden; }
+.progress-bar { height: 100%; width: 50%; border-radius: 99px; background: var(--maroon); transition: width .3s ease; }
+.progress-label { margin: .3rem 0 0; font-size: .85rem; font-weight: 600; color: var(--muted); }
+.step-actions { display: flex; gap: .6rem; margin-top: .3rem; }
+.step-actions .btn { flex: 1; padding: .75rem; }
+.step-actions .btn.ghost-dark { margin-left: 0; }
+.skill-request { display: flex; flex-direction: column; gap: .35rem; }
+.sk-title { font-weight: 600; font-size: .92rem; }
+.skill-request-row { display: flex; align-items: stretch; gap: .5rem; }
+.skill-request-row input { flex: 1; min-width: 0; }
+.skill-request-row .btn.small { margin: 0; padding: 0 1.1rem; white-space: nowrap; }
+
+/* ===== Popups (edit profile, swap request) ===== */
+dialog { border: 2px solid var(--maroon); border-radius: 14px; background: var(--paper); color: var(--ink); width: calc(100% - 2rem); max-width: 480px; padding: 1.3rem; max-height: 90vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); }
+dialog::backdrop { background: rgba(58, 0, 5, .6); }
+dialog h3 { margin: 0 0 .4rem; color: var(--maroon); }
+dialog form { display: flex; flex-direction: column; gap: .8rem; }
+dialog form p { margin: 0; }
+dialog form label { display: flex; flex-direction: column; gap: .25rem; font-weight: 600; }
+.dialog-actions { display: flex; gap: .5rem; }
+.dialog-actions .btn.ghost-dark { margin-left: 0; }
+
+/* ===== Short screens: tighten the account screens so nothing needs scrolling ===== */
+@media (max-height: 720px) {
+  .auth-head { margin-bottom: .5rem; }
+  .auth-head p { display: none; }
+  .auth-form, .signup-step { gap: .5rem; }
+}
+
+/* ===== Tablet and phone: hide the logo panel on sign-up ===== */
+@media (max-width: 800px) {
+  .auth-layout { grid-template-columns: 1fr; padding: 0; }
+  .auth-art { display: none; }
+  .auth-side { min-height: calc(100dvh - var(--header-h) - var(--bottom-bar)); padding: 1rem; }
+}
+
+/* ===== Phone: the menu becomes a bottom tab bar ===== */
+@media (max-width: 700px) {
+  .site-header { padding: .6rem .7rem; }
+  .pill { padding: .35rem .8rem; min-height: 0; }
+  .pill-right { gap: 0; padding: .35rem; }
+  .pill-btn, .pill-link { height: 2.3rem; }
+  .pill-link { padding: 0 .7rem; }
+  .menu { top: calc(100% + .5rem); }
+  body.menu-open nav { opacity: .4; pointer-events: none; }   /* the phone tab bar dims too */
+  nav a[href="#home"] { display: flex; }
+  nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 6; flex-wrap: nowrap; gap: 0; justify-content: space-around; background: var(--maroon-dark); border-top: 2px solid var(--maroon); padding: .35rem 0 calc(.35rem + env(safe-area-inset-bottom, 0px)); }
+  nav a, nav button { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: .65rem; text-align: center; border-bottom: 0; }
+  nav a.active, nav button, nav button[aria-expanded="true"] { border-bottom: 0; }
+  .panel { position: fixed; left: .7rem; right: .7rem; top: auto; width: auto; bottom: calc(var(--bottom-bar) + env(safe-area-inset-bottom, 0px) + .6rem); }
+  .ico { display: block; font-size: 1.2rem; line-height: 1.2; }
+  :root { --header-h: 4.2rem; }
+  body.signed-in { padding-bottom: 4.5rem; --bottom-bar: 4.5rem; }
+
+  section { padding: 1.5rem 1rem 2.5rem; }
+  .hero { padding: 4rem 1rem 2.4rem; }
+  .toggle { display: flex; margin: .8rem 0 0; }
+  .radar-row { grid-template-columns: 7.5rem 1fr; }
+  .radar-row .note { grid-column: 1 / -1; }
+}
+@media (max-width: 360px) {
+  .field-row { grid-template-columns: 1fr; }
+}

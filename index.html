@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barter Brain - Trade your Brainpower</title>
+<link rel="icon" href="images/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="pill pill-left">
+    <a class="logo" href="#home"><img class="logo-img" src="images/logo.png" alt=""><span class="logo-text">Barter Brain</span></a>
+    <nav>
+      <a href="#home"><span class="ico">&#127968;</span>Home</a>
+      <a class="members-only" href="#browse"><span class="ico">&#128269;</span>Browse</a>
+      <a class="members-only" href="#matches"><span class="ico">&#129309;</span>Find Match</a>
+      <a class="members-only" href="#radar"><span class="ico">&#128225;</span>Skill radar</a>
+      <a class="members-only" href="#inbox"><span class="ico">&#128236;</span><span>Inbox<span id="inboxCount"></span></span></a>
+      <button class="members-only" type="button" id="navRequestBtn" aria-haspopup="true" aria-expanded="false" aria-controls="requestPanel"><span class="ico">&#128161;</span>Request</button>
+    </nav>
+    <div class="panel" id="requestPanel" hidden>
+      <div class="skill-request">
+        <div class="sk-title">Request a new skill</div>
+        <div class="skill-request-row">
+          <input type="text" maxlength="30" placeholder="Type a skill to request" aria-label="Skill to request">
+          <button class="btn small" type="button" data-request-skill>Request</button>
+        </div>
+        <p class="hint">Requests are reviewed first. Once approved, the skill appears for everyone.</p>
+      </div>
+    </div>
+  </div>
+  <div class="pill pill-right">
+    <a class="pill-link guest-only" href="#join" data-auth="signin">Log in</a>
+    <a class="pill-btn guest-only" href="#join" data-auth="signup">Sign up</a>
+    <div class="account-menu members-only">
+      <button type="button" class="pill-btn" id="accountBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="accountDropdown">Account <span class="caret" aria-hidden="true"></span></button>
+      <div class="menu" id="accountDropdown" role="menu" hidden>
+        <a role="menuitem" href="#join">Manage account</a>
+        <button role="menuitem" type="button" id="menuSignOut">Log out</button>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="backdrop" id="menuBackdrop"></div>
+
+<main>
+  <section id="home" class="view">
+    <div class="hero">
+      <div class="hero-mark"><img src="images/logo.png" alt=""></div>
+      <h1>Trade your Brainpower</h1>
+      <p class="lead">Got skills to share? Ready to learn something new? Swap knowledge with the perfect match</p>
+      <p class="stats" id="stats">Loading...</p>
+      <a class="btn" id="startBtn" href="#join" data-auth="signup">Start Trading</a>
+      <a class="btn ghost members-only" href="#matches">Find my matches</a>
+    </div>
+    <div class="steps">
+      <h2>How it works</h2>
+      <ol class="steps-row">
+        <li><span class="step-num">1</span><h3>Create your account</h3><p>Use your school email. Pick what you can teach and what you want to learn.</p></li>
+        <li><span class="step-num">2</span><h3>Get matched</h3><p>We pair you with classmates who fit, with mutual swaps first.</p></li>
+        <li><span class="step-num">3</span><h3>Send a request</h3><p>They get your contact, and you set up a time to swap.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="join" class="view">
+    <div class="auth-layout">
+      <div class="auth-side">
+        <div class="auth-box">
+          <div id="authForms">
+
+            <!-- ===== SIGN UP (2 steps in one form) ===== -->
+            <form id="signupForm" class="auth-form" novalidate>
+              <div class="progress">
+                <div class="progress-track"><div class="progress-bar" id="signupBar"></div></div>
+                <p class="progress-label" id="signupStepLabel">Step 1 of 2</p>
+              </div>
+
+              <div class="signup-step" id="signupStep1">
+                <div class="auth-head">
+                  <h2>Join Barter Brain</h2>
+                  <p>Create your account with your school email.</p>
+                </div>
+                <div class="field-row">
+                  <label>Full name <input name="fullName" required maxlength="40" autocomplete="name"></label>
+                  <label>Section <input name="section" required maxlength="20" placeholder="e.g. CS 1-1"></label>
+                </div>
+                <label>School email
+                  <input name="email" type="email" required placeholder="studentnumber@lpulaguna.edu.ph"
+                         pattern=".+@lpulaguna\.edu\.ph" title="Use your @lpulaguna.edu.ph email" autocomplete="email">
+                </label>
+                <div class="field-row">
+                  <label>Username
+                    <input name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_][A-Za-z0-9_.]{2,19}"
+                           placeholder="letters, numbers, _ or ." title="3 to 20 characters: letters, numbers, underscores or dots. It can't start with a dot." autocomplete="username">
+                  </label>
+                  <label>Password <input name="pin" type="password" required minlength="6" placeholder="6+ characters" autocomplete="new-password"></label>
+                </div>
+                <label>Contact <input name="contact" required maxlength="80" placeholder="Messenger, Instagram or phone number"></label>
+                <button class="btn block" type="button" id="signupNext">Continue</button>
+                <p id="signupMsg1" role="status"></p>
+                <p class="hint center">Your contact is only shared when you send a swap request.</p>
+                <p class="switch">Already have an account? <button type="button" class="link-btn" data-switch="signin">Log in</button></p>
+              </div>
+
+              <div class="signup-step" id="signupStep2" hidden>
+                <div class="auth-head">
+                  <h2>Tell us more</h2>
+                  <p>Help us find your best matches.</p>
+                </div>
+                <fieldset><legend>I can teach</legend><div class="chips" id="joinTeach"></div></fieldset>
+                <fieldset><legend>I want to learn</legend><div class="chips" id="joinLearn"></div></fieldset>
+                <div class="skill-request">
+                  <div class="sk-title">Skill not on the list?</div>
+                  <div class="skill-request-row">
+                    <input type="text" maxlength="30" placeholder="Type a skill to request" aria-label="Skill to request">
+                    <button class="btn small" type="button" data-request-skill>Request</button>
+                  </div>
+                  <p class="hint">Requests are reviewed first. Once approved, the skill appears for everyone.</p>
+                </div>
+                <fieldset><legend>I am free on</legend><div class="chips" id="joinDays"></div></fieldset>
+                <fieldset><legend>Mode</legend>
+                  <div class="chips">
+                    <label class="chip-check"><input type="radio" name="joinMode" value="Face-to-face"><span>Face-to-face</span></label>
+                    <label class="chip-check"><input type="radio" name="joinMode" value="Online"><span>Online</span></label>
+                  </div>
+                </fieldset>
+                <div class="step-actions">
+                  <button class="btn ghost-dark" type="button" id="signupBack">Back</button>
+                  <button class="btn" type="submit">Create account</button>
+                </div>
+                <p id="signupMsg" role="status"></p>
+              </div>
+            </form>
+
+            <!-- ===== LOG IN ===== -->
+            <form id="signinForm" class="auth-form" hidden>
+              <div class="auth-head">
+                <h2>Welcome back to Barter Brain</h2>
+                <p>Log in to your account and start trading.</p>
+              </div>
+              <label>Username <input name="username" required autocomplete="username"></label>
+              <label>Password <input name="pin" type="password" required autocomplete="current-password"></label>
+              <button class="btn block" type="submit">Log in</button>
+              <p id="signinMsg" role="status"></p>
+              <p class="switch">Don't have an account? <button type="button" class="link-btn" data-switch="signup">Sign up</button></p>
+            </form>
+          </div>
+
+          <div id="welcome" hidden>
+            <div class="auth-head">
+              <h2>Welcome, <span id="welcomeName"></span>!</h2>
+              <p>You're logged in. Browse students or find your matches.</p>
+            </div>
+            <p id="welcomeRequests"></p>
+            <div class="welcome-actions">
+              <a class="btn" href="#matches">Find my matches</a>
+              <button class="btn ghost-dark" type="button" id="editProfileBtn">Edit my profile</button>
+              <button class="btn ghost-dark" type="button" id="signOutBtn">Log out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-art" aria-hidden="true">
+        <img src="images/logo.png" alt="">
+      </div>
+    </div>
+  </section>
+
+  <section id="inbox" class="view members-only">
+    <h2>Inbox</h2>
+    <p>Swap requests sent to you. Reach out using the contact they shared.</p>
+    <div class="cards" id="inboxList"></div>
+  </section>
+
+  <section id="browse" class="view members-only">
+    <h2>Browse students</h2>
+    <div class="filters">
+      <label>Search <input type="search" id="searchBox" placeholder="Name, section or skill"></label>
+      <label>Skill <select id="skillFilter"></select></label>
+      <label>Day <select id="dayFilter"></select></label>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section id="matches" class="view members-only">
+    <h2>Find my matches</h2>
+    <p>Nothing is submitted here. Pick your skills and see who fits.</p>
+    <fieldset><legend>I can teach</legend><div class="chips" id="teachChips"></div></fieldset>
+    <fieldset><legend>I want to learn</legend><div class="chips" id="learnChips"></div></fieldset>
+    <fieldset><legend>I am free on</legend><div class="chips" id="dayChips"></div></fieldset>
+    <button class="btn" id="matchBtn" type="button">Find matches</button>
+    <label class="toggle"><input type="checkbox" id="mutualOnly"> Mutual swaps only</label>
+    <p id="matchMsg" role="status"></p>
+    <div class="cards" id="results"></div>
+  </section>
+
+  <section id="radar" class="view members-only">
+    <h2>Skill radar</h2>
+    <p>The most wanted skills on campus. Skills with no teacher yet are marked, so you know where you're needed. Tap a skill to see those students in Browse.</p>
+    <div id="radarList"></div>
+  </section>
+</main>
+
+<dialog id="editDialog">
+  <form id="editForm">
+    <h3>Edit my profile</h3>
+    <label>Full name <input name="fullName" required maxlength="40"></label>
+    <label>Section <input name="section" required maxlength="20"></label>
+    <label>Contact <input name="contact" required maxlength="80"></label>
+    <fieldset><legend>I can teach</legend><div class="chips" id="editTeach"></div></fieldset>
+    <fieldset><legend>I want to learn</legend><div class="chips" id="editLearn"></div></fieldset>
+                <div class="skill-request">
+                  <div class="sk-title">Skill not on the list?</div>
+                  <div class="skill-request-row">
+                    <input type="text" maxlength="30" placeholder="Type a skill to request" aria-label="Skill to request">
+                    <button class="btn small" type="button" data-request-skill>Request</button>
+                  </div>
+                  <p class="hint">Requests are reviewed first. Once approved, the skill appears for everyone.</p>
+                </div>
+    <fieldset><legend>I am free on</legend><div class="chips" id="editDays"></div></fieldset>
+    <fieldset><legend>Mode</legend>
+      <div class="chips">
+        <label class="chip-check"><input type="radio" name="editMode" value="Face-to-face"><span>Face-to-face</span></label>
+        <label class="chip-check"><input type="radio" name="editMode" value="Online"><span>Online</span></label>
+      </div>
+    </fieldset>
+    <div class="dialog-actions">
+      <button class="btn" type="submit">Save changes</button>
+      <button class="btn ghost-dark" type="button" id="editCancel">Cancel</button>
+    </div>
+    <p id="editStatus" role="status"></p>
+  </form>
+</dialog>
+
+<dialog id="requestDialog">
+  <form id="requestForm">
+    <h3>Request a swap with <span id="reqName"></span></h3>
+    <p id="reqSummary"></p>
+    <label>Message (optional)
+      <textarea name="message" maxlength="140" rows="3" placeholder="Hi! When are you free to meet?"></textarea>
+    </label>
+    <label>Your contact <input name="contact" required maxlength="80"></label>
+    <p class="hint" id="reqNote"></p>
+    <div class="dialog-actions">
+      <button class="btn" type="submit">Send request</button>
+      <button class="btn ghost-dark" type="button" id="reqCancel">Cancel</button>
+    </div>
+    <p id="reqStatus" role="status"></p>
+  </form>
+</dialog>
+
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
