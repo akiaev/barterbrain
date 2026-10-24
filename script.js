@@ -52,7 +52,22 @@ function esc(text) {            // stops pasted HTML from running on the page
   div.textContent = text;
   return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");   // quotes too, so it is safe inside attributes
 }
-function firstName(name) { return (name || "").trim().split(/\s+/)[0]; }   // only first names are shown to other people
+// Tidies a name: "ERMUNDA, ANGELICA" or "Ermunda, Angelica" -> "Angelica Ermunda", "JUAN DELA CRUZ" -> "Juan Dela Cruz".
+// Words with mixed capitals (McDonald, DeLeon) are left alone. Commas are never kept.
+function cleanName(name) {
+  let text = String(name || "").replace(/\s+/g, " ").trim();
+  const comma = text.indexOf(",");
+  if (comma !== -1) {
+    const before = text.slice(0, comma).trim(), after = text.slice(comma + 1).replace(/,/g, " ").trim();
+    // "Last, First" becomes "First Last", but "Juan Cruz, Jr." just loses the comma
+    text = /^(jr|sr|ii|iii|iv)\.?$/i.test(after) || !after ? `${before} ${after}` : `${after} ${before}`;
+  }
+  return text.replace(/,/g, "").replace(/\s+/g, " ").trim()
+    .replace(/[^\s-]+/g, word => word === word.toUpperCase() || word === word.toLowerCase()
+      ? word.toLowerCase().replace(/(^|['’.])(\p{L})/gu, (m, a, b) => a + b.toUpperCase())
+      : word);
+}
+function firstName(name) { return cleanName(name).split(" ")[0]; }   // only first names are shown to other people
 const SKILL_LABELS = {
   "html/css": "HTML/CSS",
   "excel": "MS Excel",
@@ -104,7 +119,7 @@ function rowsToPeople(rows) {
     // The password column holds: hash | original username | email hash (older rows only have the hash)
     const parts = (r[COLS.pinHash] || "").trim().split("|");
     const person = {
-      name: r[COLS.name].trim(),
+      name: cleanName(r[COLS.name]),   // also fixes older sign-ups like "ERMUNDA, ANGELICA"
       section: cleanSection(r[COLS.section] || ""),
       teach: toList(r[COLS.teach] || ""),
       learn: toList(r[COLS.learn] || ""),
@@ -497,7 +512,7 @@ async function handleSignup(event) {
 
   const contact = form.contact.value.trim();
   const profile = {
-    name: form.fullName.value.trim(), section: cleanSection(form.section.value),
+    name: cleanName(form.fullName.value), section: cleanSection(form.section.value),
     teach, learn, days, mode, username, key: username
   };
 
@@ -564,7 +579,26 @@ async function handleSignin(event) {
   }
 }
 
+function connectNameInputs() {   // sign-up and edit-profile name fields: no commas, tidy capitals when you leave the box
+  document.querySelectorAll('input[name="fullName"]').forEach(input => {
+    input.addEventListener("input", () => {
+      if (!input.value.includes(",")) return;
+      const at = input.selectionStart - (input.value.slice(0, input.selectionStart).match(/,/g) || []).length;
+      input.value = input.value.replace(/,/g, "");
+      input.setSelectionRange(at, at);
+    });
+    input.addEventListener("paste", event => {   // pasting "LASTNAME, FIRSTNAME" flips it to "Firstname Lastname"
+      const text = (event.clipboardData || window.clipboardData).getData("text");
+      if (!text.includes(",")) return;
+      event.preventDefault();
+      input.setRangeText(cleanName(text).slice(0, input.maxLength > 0 ? input.maxLength : 40), input.selectionStart, input.selectionEnd, "end");
+    });
+    input.addEventListener("blur", () => { input.value = cleanName(input.value); });
+  });
+}
+
 function connectAccounts() {
+  connectNameInputs();
   document.getElementById("signupForm").addEventListener("submit", handleSignup);
   document.getElementById("signinForm").addEventListener("submit", handleSignin);
   document.getElementById("signOutBtn").addEventListener("click", signOut);
@@ -924,7 +958,7 @@ function openEditProfile() {
     return;
   }
   const form = document.getElementById("editForm");
-  form.fullName.value = currentUser.name;
+  form.fullName.value = cleanName(currentUser.name);
   form.section.value = currentUser.section;
   form.username.value = currentUser.username;
   form.contact.value = getContact();
@@ -954,7 +988,7 @@ async function saveProfile(event) {
     return;
   }
   if (usernameTaken(newUsername, ownKey)) { status.textContent = "That username is taken. Try another one."; return; }
-  const updated = { ...currentUser, name: form.fullName.value.trim(), section: cleanSection(form.section.value),
+  const updated = { ...currentUser, name: cleanName(form.fullName.value), section: cleanSection(form.section.value),
                     username: newUsername, key: ownKey,
                     teach, learn, days, mode, editedAt: Date.now() };
 
