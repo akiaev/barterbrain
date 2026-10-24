@@ -52,7 +52,8 @@ const SKILL_LABELS = {
   "html/css": "HTML/CSS",
   "excel": "MS Excel",
   "ms word": "MS Word",
-  "ui/ux": "UI/UX"
+  "ui/ux": "UI/UX",
+  "javascript": "JavaScript"
 };   // skills that need special capitals; add more like  "css": "CSS"
 function label(skill) { return SKILL_LABELS[skill.toLowerCase()] || skill.charAt(0).toUpperCase() + skill.slice(1); }
 function toList(cell) { return cell.split(",").map(s => s.trim().toLowerCase()).filter(Boolean); }
