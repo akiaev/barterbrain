@@ -334,14 +334,14 @@ function renderMatches() {
   } else if (found.length) {
     el.matchMsg.textContent = "No mutual swaps yet. Turn off Mutual swaps only to see one-way matches.";
   } else {
-    el.matchMsg.textContent = "No matches yet. Check the Skill radar to see which skills are needed.";
+    el.matchMsg.textContent = "No matches yet. Check the Skill Radar to see which skills are needed.";
   }
   el.results.innerHTML = lastResults.map(matchCard).join("");
   stagger(el.results);
 }
 
 
-// ----- Skill radar -----
+// ----- Skill Radar -----
 function addCount(counts, skill, kind) {
   if (!counts[skill]) counts[skill] = { want: 0, teach: 0 };
   counts[skill][kind]++;
@@ -1232,7 +1232,7 @@ async function requestSkill(button) {   // sends a request to you; nothing is ad
   button.disabled = false;
 }
 
-function showSkillInBrowse(skill) {   // used by the Skill radar
+function showSkillInBrowse(skill) {   // used by the Skill Radar
   el.skillFilter.value = skill;
   document.querySelectorAll('input[name="browseDay"]').forEach(box => { box.checked = false; });
   el.searchBox.value = "";
